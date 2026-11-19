@@ -171,4 +171,15 @@ public sealed class EdgeTests : IAsyncLifetime
         using var response = await client.GetAsync($"http://localhost:{_publicPort}/");
         Assert.Equal(HttpStatusCode.BadGateway, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Admin_surface_root_passes_the_edge_and_reaches_the_proxy()
+    {
+        // "/" is the admin shell, rewritten to /admin; with web down it answers 502 —
+        // not 404, which would mean the edge refused the path.
+        using var handler = new HttpClientHandler { AllowAutoRedirect = false };
+        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(40) };
+        using var response = await client.GetAsync($"http://localhost:{_adminPort}/");
+        Assert.Equal(HttpStatusCode.BadGateway, response.StatusCode);
+    }
 }

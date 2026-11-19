@@ -6,15 +6,23 @@ set -u
 
 API_IMAGE="${1:?usage: smoke-test.sh <api-image> <web-image>}"
 WEB_IMAGE="${2:?usage: smoke-test.sh <api-image> <web-image>}"
+# ARI_SMOKE_NET=host runs both containers on the host network. Use it where the
+# host firewall blocks the docker bridge's published ports (firewalld/Garuda).
+# Bridge mode is the real one (CI); host mode cannot verify port isolation.
+HOST_MODE="${ARI_SMOKE_NET:-bridge}"
 NET="ari-smoke-$RANDOM"
-PUB=$((9000 + RANDOM % 500))
-ADM=$((PUB + 1))
+if [ "$HOST_MODE" = "host" ]; then
+  # Off the standard ports: this machine may already run the old site on 8080.
+  PUB=18080; ADM=18081; INT=18082; WEBPORT=13000
+else
+  PUB=$((9000 + RANDOM % 500)); ADM=$((PUB + 1)); INT=8082; WEBPORT=3000
+fi
 WORK="$(mktemp -d)"
 DATA="$WORK/data"
 mkdir -p "$DATA/media" "$WORK/backups"
 cleanup() {
   docker rm -f ari-smoke-api ari-smoke-web >/dev/null 2>&1
-  docker network rm "$NET" >/dev/null 2>&1
+  [ "$HOST_MODE" = "host" ] || docker network rm "$NET" >/dev/null 2>&1
   rm -rf "$WORK"
 }
 trap cleanup EXIT INT TERM
@@ -22,27 +30,49 @@ trap cleanup EXIT INT TERM
 fail() { echo "FAIL: $*" >&2; exit 1; }
 ok() { echo "ok: $*"; }
 
-docker network create --internal "$NET" >/dev/null || fail "network"
-# web joins only the internal network; api joins both.
+if [ "$HOST_MODE" = "host" ]; then
+  # Containers listen directly on the host stack: their listen ports ARE the
+  # host ports, chosen off 8080 (the old site may still hold it locally).
+  WEB_NET="--network host"
+  WEB_INTERNAL="http://127.0.0.1:$INT"
+  WEB_PORT_ENV="-e PORT=$WEBPORT"
+  API_NET="--network host"
+  API_WEB="http://127.0.0.1:$WEBPORT"
+  API_PORTS=""
+  API_PUB_PORT=$PUB; API_ADM_PORT=$ADM; API_INT_PORT=$INT
+else
+  # Containers always listen on their fixed internal ports; -p maps them out.
+  WEB_NET="--network $NET"
+  WEB_INTERNAL="http://ari-smoke-api:8082"
+  WEB_PORT_ENV=""
+  API_NET="--network $NET"
+  API_WEB="http://ari-smoke-web:3000"
+  API_PORTS="-p 127.0.0.1:$PUB:8080 -p 127.0.0.1:$ADM:8081"
+  API_PUB_PORT=8080; API_ADM_PORT=8081; API_INT_PORT=8082
+  docker network create --internal "$NET" >/dev/null || fail "network"
+fi
+# shellcheck disable=SC2086
 docker run -d --name ari-smoke-web --rm \
-  --network "$NET" \
+  $WEB_NET \
   --init --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges \
-  -e ARI_API_INTERNAL=http://ari-smoke-api:8082 \
+  -e ARI_API_INTERNAL="$WEB_INTERNAL" $WEB_PORT_ENV \
   "$WEB_IMAGE" >/dev/null || fail "web did not start"
 
 echo "ari-smoke-key:$(openssl rand -base64 32)" >"$WORK/key"
 
+# shellcheck disable=SC2086
 docker run -d --name ari-smoke-api --rm \
-  --network "$NET" -p "127.0.0.1:$PUB:8080" -p "127.0.0.1:$ADM:8081" \
+  $API_NET $API_PORTS \
   --init --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges \
   -e ARI_ENV=production -e ARI_DATA_DIR=/data -e ARI_BACKUP_DIR=/backups \
-  -e ARI_PUBLIC_PORT=8080 -e ARI_INTERNAL_PORT=8082 -e ADMIN_PORT=8081 \
-  -e ARI_WEB_ORIGIN=http://ari-smoke-web:3000 \
+  -e ARI_PUBLIC_PORT=$API_PUB_PORT -e ARI_INTERNAL_PORT=$API_INT_PORT \
+  -e ADMIN_PORT=$API_ADM_PORT \
+  -e ARI_WEB_ORIGIN="$API_WEB" \
   -e PUBLIC_ORIGIN=http://localhost:$PUB -e ADMIN_ORIGIN=http://localhost:$ADM \
   -e APP_KEY_FILE=/run/secrets/key \
   --mount type=bind,src="$DATA",dst=/data \
   --mount type=bind,src="$WORK/backups",dst=/backups \
-  --secret id=key,src="$WORK/key" \
+  -v "$WORK/key":/run/secrets/key:ro \
   "$API_IMAGE" >/dev/null || fail "api did not start"
 
 B="http://127.0.0.1:$PUB"
@@ -61,8 +91,12 @@ ok "api healthy"
 
 # 1. No key means refuse to start.
 docker rm -f ari-nokey >/dev/null 2>&1
-docker run -d --name ari-nokey --rm --network "$NET" \
-  -e ARI_ENV=production -e ARI_DATA_DIR=/tmp -e PUBLIC_ORIGIN=http://x -e ADMIN_ORIGIN=http://y \
+# shellcheck disable=SC2086
+# No --rm here: the container must stay inspectable after it refuses.
+docker run -d --name ari-nokey $API_NET \
+  -e ARI_ENV=production -e ARI_DATA_DIR=/tmp \
+  -e ARI_PUBLIC_PORT=28080 -e ARI_INTERNAL_PORT=28082 \
+  -e PUBLIC_ORIGIN=http://x -e ADMIN_ORIGIN=http://y \
   "$API_IMAGE" >/dev/null
 sleep 8
 docker inspect -f '{{.State.Status}}' ari-nokey 2>/dev/null | grep -qx exited \
@@ -70,10 +104,15 @@ docker inspect -f '{{.State.Status}}' ari-nokey 2>/dev/null | grep -qx exited \
 docker rm -f ari-nokey >/dev/null 2>&1
 ok "no key refuses to boot"
 
-# 2. Port discipline: web publishes nothing, api never publishes 8082.
-web_ports=$(docker inspect -f '{{json .NetworkSettings.Ports}}' ari-smoke-web)
-[ "$web_ports" = "{}" ] || fail "web published ports: $web_ports"
-ok "web publishes no ports"
+# 2. Port discipline: web publishes nothing. (Bridge mode only: host mode shares
+#    the host stack by design, so isolation is proven in CI instead.)
+if [ "$HOST_MODE" != "host" ]; then
+  web_ports=$(docker inspect -f '{{json .NetworkSettings.Ports}}' ari-smoke-web)
+  [ "$web_ports" = "{}" ] || fail "web published ports: $web_ports"
+  ok "web publishes no ports"
+else
+  ok "web port isolation: skipped in host mode (CI runs bridge mode)"
+fi
 
 # 3. Internal paths on every published port.
 [ "$(curl -s -o /dev/null -w '%{http_code}' "$B/internal/content")" = "404" ] || fail "internal on public"

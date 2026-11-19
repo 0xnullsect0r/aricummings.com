@@ -1,0 +1,15 @@
+.git
+.gitignore
+bin
+obj
+node_modules
+.next
+data
+*.db
+*.db-wal
+*.db-shm
+docs
+tests
+deploy
+*.wt
+tmp

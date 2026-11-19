@@ -7,7 +7,7 @@ WORKDIR /src
 # Restore with only the project files first, so source changes don't re-restore.
 COPY apps/api/AriApi.csproj apps/api/
 COPY apps/api.tests/api.tests.csproj apps/api.tests/
-COPY apps/Ari.slnx .
+COPY apps/Ari.slnx apps/
 RUN dotnet restore apps/Ari.slnx
 
 COPY apps/api apps/api
@@ -50,6 +50,6 @@ EXPOSE 8080
 # 8081 (admin) and 8082 (internal) are exposed only when ADMIN_PORT is set; compose decides.
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD curl -fsS http://127.0.0.1:8080/api/health || exit 1
+    CMD curl -fsS "http://127.0.0.1:${ARI_PUBLIC_PORT:-8080}/api/health" || exit 1
 
 ENTRYPOINT ["dotnet", "Ari.dll"]

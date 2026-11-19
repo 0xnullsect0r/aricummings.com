@@ -162,8 +162,10 @@ public sealed class EdgeMiddleware(
         }
 
         // Only what the admin needs passes; customer APIs and any other file stay 404 here.
+        // "/" is the shell itself, rewritten below to /admin.
         var allowed =
-            canonical.StartsWith("/admin", StringComparison.Ordinal)
+            canonical == "/"
+            || canonical.StartsWith("/admin", StringComparison.Ordinal)
             || canonical.StartsWith("/api/admin", StringComparison.Ordinal)
             || canonical.StartsWith("/api/auth", StringComparison.Ordinal)
             || canonical.StartsWith("/_next/", StringComparison.Ordinal)

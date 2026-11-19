@@ -15,7 +15,7 @@ COPY apps/web apps/web
 RUN cd apps/web && npm run build
 
 FROM node:24-bookworm-slim
-RUN groupadd -g 1000 site && useradd -u 1000 -g 1000 site
+# The node image's own user (uid 1000) is what we run as; web holds no volumes.
 
 ARG SITE_RELEASE=dev
 LABEL site.release=$SITE_RELEASE
@@ -28,11 +28,11 @@ ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1
 
 WORKDIR /app
-COPY --from=build --chown=site:site /src/apps/web/.next/standalone ./
-COPY --from=build --chown=site:site /src/apps/web/.next/static ./.next/static
-COPY --from=build --chown=site:site /src/apps/web/public ./public
+COPY --from=build --chown=node:node /src/apps/web/.next/standalone ./
+COPY --from=build --chown=node:node /src/apps/web/.next/static ./.next/static
+COPY --from=build --chown=node:node /src/apps/web/public ./public
 
-USER site
+USER node
 EXPOSE 3000
 
 # No curl in this image; the health check uses Node's own fetch.
