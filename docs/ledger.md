@@ -32,6 +32,18 @@
 - Nothing has run on the real server. Local runs only, once they exist.
 - SMTP delivery untested until credentials exist.
 - Passkeys: software authenticator tests only until tried on a real phone.
+- Content/media/GitHub areas (wt/content): built and tested on real sockets locally
+  (41 tests, worktree ports 8110-8119, /tmp/content-wt). Not proven: the github-sync job
+  against the live API (tests disable it via ARI_TEST_DISABLE_GITHUB_SYNC=1); media
+  processing in the production container (needs libvips in the runtime image — present on
+  the dev host, libvips 8.18.7); real-photo color/rendering quality (tests use noise
+  images); the 40 MB refusal path above the shared 1 MiB API body limit is only proven up
+  to ~2 MB uploads.
+- Platform gaps found while building content (workarounds live in Features/Content, not
+  Platform): EdgeMiddleware 404s everything on the internal listener (no Surface.Internal
+  case in its switch), so /internal/content is served by InternalContentMiddleware ahead
+  of the edge; TokenIssuer.Issue drops its claims argument, so preview tokens are minted
+  by PreviewTokens with the same signing parameters.
 
 ## Deployment contract
 

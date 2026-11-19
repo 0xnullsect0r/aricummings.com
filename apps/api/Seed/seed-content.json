@@ -1,4 +1,226 @@
 {
-  "note": "Seed content for an empty database. The Content feature expands this with the real site documents; seeding only ever runs on an empty documents table.",
-  "documents": {}
+  "note": "First-boot content, embedded in the image. Seeding runs only on an empty documents table.",
+  "documents": {
+    "site": {
+      "name": "Ari Cummings",
+      "tagline": "Encrypted messaging, operating systems, and the servers they run on.",
+      "contactEmail": "contact@aricummings.com",
+      "githubHandle": "0xnullsect0r",
+      "location": "McMinnville, Oregon",
+      "footerLicense": "AGPL-3.0",
+      "seo": {
+        "title": "Ari Cummings — software developer",
+        "description": "Portfolio of Ari Cummings: the Enclave messenger, RustOS, MultiForge, eDEX, and client platforms. McMinnville, Oregon."
+      }
+    },
+    "page:home": {
+      "hero": {
+        "kicker": "Ari Cummings · software developer",
+        "lines": [
+          "Messengers built to resist surveillance.",
+          "Operating systems from the kernel up.",
+          "Servers that run themselves."
+        ],
+        "intro": "I design and build secure communication, systems software, and the infrastructure underneath it — mostly in Rust, C# and TypeScript."
+      },
+      "about": {
+        "paras": [
+          "I'm Ari Cummings. I write software across the whole stack: an encrypted messenger designed to survive targeted surveillance, a Rust operating system with its own network stack and text browser, a multithreaded Minecraft server, and the Linux infrastructure that runs all of it.",
+          "I'm from McMinnville, Oregon, studied at The Delphian School, and I'm studying computer science in college. Client work keeps me honest: production booking and membership platforms for real businesses, from database to deployment.",
+          "Everything source-available on this site is AGPL or GPL. Fork it."
+        ],
+        "facts": [
+          "McMinnville, Oregon",
+          "The Delphian School",
+          "Computer science, in college",
+          "github.com/0xnullsect0r"
+        ]
+      },
+      "clientIntro": "Alongside my own projects I build and maintain production platforms for small businesses — a 24/7 trailer-rental booking system and a riding-methodology membership site.",
+      "alsoBuilding": [
+        { "name": "Quark" },
+        { "name": "fleetboard" },
+        { "name": "the-perimeter" },
+        { "name": "PointsSlip" },
+        { "name": "MileageTracker" },
+        { "name": "Tailscale-Ubiquiti" },
+        { "name": "WatchArcade" }
+      ],
+      "stack": [
+        { "label": "Systems", "items": ["Rust", "Java", "OpenSCAD"] },
+        { "label": "Apps", "items": ["Swift", "SwiftUI", "Kotlin"] },
+        { "label": "Web & services", "items": ["C#", "ASP.NET Core", "Avalonia", "Next.js", "TypeScript", "Python"] },
+        { "label": "Infrastructure", "items": ["Linux", "Proxmox", "pfSense", "Docker", "Nginx"] }
+      ],
+      "workOrder": ["enclave", "rustos", "multiforge", "edex", "red-wagon-rentals", "connected-riding"]
+    },
+    "work:enclave": {
+      "title": "Enclave",
+      "status": "pre-release · not yet audited",
+      "category": "oss",
+      "year": "2026",
+      "summary": "An open-source messenger with the features people expect from Signal — chats, groups, voice and video calls, photos, voice notes, reactions, disappearing messages — and a much stronger design against surveillance.",
+      "links": [
+        { "label": "Source", "url": "https://github.com/0xnullsect0r/enclave-messenger" },
+        { "label": "Releases", "url": "https://github.com/0xnullsect0r/enclave-messenger/releases/latest" }
+      ],
+      "tech": ["Rust", "Tor", "X448", "ML-KEM-1024", "Classic McEliece", "SLH-DSA", "KMAC256", "Slint"],
+      "repo": { "url": "https://github.com/0xnullsect0r/enclave-messenger", "license": "GPL-3.0-only" },
+      "sections": [
+        {
+          "type": "text",
+          "heading": "Post-quantum from the first message",
+          "html": "<p>Every session combines three independent key-exchange families — X448, ML-KEM-1024 and Classic McEliece-8192128 — and every ratchet turn takes a full post-quantum step.</p>"
+        },
+        {
+          "type": "text",
+          "heading": "Metadata hidden, not just content",
+          "html": "<p>Traffic goes through Tor to each server's onion service (the Nym mixnet is optional), every message is the same size, and constant-rate cover traffic hides when you are talking. Servers never learn who writes to whom.</p>"
+        },
+        {
+          "type": "text",
+          "heading": "No phone number, no email",
+          "html": "<p>Your account is a key. Usernames are optional and checked by public key-transparency logs with independent witnesses.</p>"
+        },
+        {
+          "type": "text",
+          "heading": "No trusted server",
+          "html": "<p>Anyone can run one; none of them can read messages, see your contacts or change your keys without being caught. It's Rust everywhere possible, including the UI.</p>"
+        },
+        {
+          "type": "text",
+          "heading": "Where it stands",
+          "html": "<p>The protocol, the servers, the network layer, the desktop app and the release pipeline are built and tested in CI; Android and iOS are being built. Enclave has <strong>not been audited yet</strong>: don't rely on it to protect anyone until it has.</p>"
+        }
+      ]
+    },
+    "work:rustos": {
+      "title": "RustOS",
+      "status": "in development",
+      "category": "oss",
+      "year": "2026",
+      "summary": "An x86-64 operating system written in Rust: a preemptive SMP kernel with ring-3 processes, a Linux-compatible system-call ABI, NVMe/AHCI/USB storage, FAT and ext2/3/4 filesystems, a full USB stack, an in-tree TCP/IP stack with wired, USB and Intel Wi-Fi 6E drivers, HTTPS, a POSIX-like shell and a small userland — all booted by UEFI.",
+      "links": [
+        { "label": "Source", "url": "https://github.com/RustOS-Dev/RustOS" }
+      ],
+      "tech": ["Rust", "UEFI", "xHCI", "NVMe", "ext4", "smoltcp", "WPA3", "musl", "QuickJS-ng"],
+      "repo": { "url": "https://github.com/RustOS-Dev/RustOS", "license": "GPL-2.0-or-later" },
+      "sections": [
+        {
+          "type": "text",
+          "heading": "The kernel",
+          "html": "<p>Per-process address spaces with demand paging, copy-on-write fork, clone threads with futexes, a per-CPU scheduler with affinity, execve of static, PIE and dynamically linked ELF programs, POSIX signals and job control, and around 180 Linux system calls — across all cores, with IPI TLB shootdown.</p>"
+        },
+        {
+          "type": "text",
+          "heading": "Storage and USB",
+          "html": "<p>NVMe, AHCI, virtio-blk and USB mass storage; GPT/MBR; FAT12/16/32 read/write and ext2/ext3/ext4 read/write with jbd2 journal replay, extents and metadata checksums. The USB stack is interrupt-driven xHCI with hot-plug, hubs, bulk streams, HID report parsing and USB Attached SCSI.</p>"
+        },
+        {
+          "type": "text",
+          "heading": "Networking",
+          "html": "<p>An in-tree TCP/IP stack with DHCP, DNS, BSD sockets and drivers for Intel and Realtek NICs plus Intel AX210 Wi-Fi with WPA2-PSK and WPA3-SAE, over IPv4 and IPv6. wget speaks TLS 1.2/1.3, and <em>browse</em> is a lynx-like text browser with CSS layout, JavaScript (QuickJS-ng), forms, cookies, HTTPS and a graphical mode.</p>"
+        },
+        {
+          "type": "text",
+          "heading": "Userland",
+          "html": "<p>init, a POSIX-like shell, rbox (about 90 coreutils), four virtual consoles and pseudo-terminals. Upstream musl builds into a sysroot, so BusyBox, curl and the QuickJS engine compile and run unchanged.</p>"
+        },
+        {
+          "type": "text",
+          "heading": "Where it began",
+          "html": "<p>Built on the foundation of Philipp Oppermann's <a href=\"https://os.phil-opp.com/\">Writing an OS in Rust</a> and grown well beyond it.</p>"
+        }
+      ]
+    },
+    "work:multiforge": {
+      "title": "MultiForge",
+      "status": "pre-release",
+      "category": "oss",
+      "year": "2026",
+      "summary": "A free-software, Folia-style regionized multithreaded drop-in replacement for the NeoForge dedicated Minecraft server. Swap your neoforge server jar for MultiForge's; your existing world, mods, configs and launch command keep working, and the world ticks in parallel across ownership regions.",
+      "links": [
+        { "label": "Source", "url": "https://github.com/0xnullsect0r/MultiForge" },
+        { "label": "Install", "url": "https://github.com/0xnullsect0r/MultiForge/releases/latest" }
+      ],
+      "tech": ["Java", "NeoForge", "ASM", "Gradle"],
+      "repo": { "url": "https://github.com/0xnullsect0r/MultiForge", "license": "GPL-3.0" },
+      "sections": [
+        {
+          "type": "text",
+          "heading": "How it parallelizes",
+          "html": "<p>Loaded chunks group into regions; each tick, every region runs its random ticks, scheduled ticks, block events, entities and block entities on a worker, in parallel, while the server thread keeps running Vanilla's loop and waits at a barrier. A mod call that reaches into another region is rerouted to the owner, and mods classified legacy run one at a time — so no mod needs to opt in.</p>"
+        },
+        {
+          "type": "text",
+          "heading": "Verified, not promised",
+          "html": "<p>Every NeoForge GameTest plus MultiForge's own region-tick tests pass; a vanilla-parity gate ticks one fixed-seed world on stock NeoForge and on MultiForge (1 and 4 workers) and expects identical output, chunk for chunk; live scenarios cover cross-region teleports, a raid, the dragon fight and fixture mods that write across regions; a strict-mode swarm of real protocol clients runs with zero ownership violations.</p>"
+        },
+        {
+          "type": "text",
+          "heading": "Status",
+          "html": "<p>Pre-release, based on NeoForge 21.1.251 (Minecraft 1.21.1). Install needs JDK 21; in-game commands resize the worker pool and report MSPT live. All under GPL-3 — no token, no activation, no phone-home.</p>"
+        }
+      ]
+    },
+    "work:edex": {
+      "title": "eDEX",
+      "status": "in development",
+      "category": "oss",
+      "year": "2026",
+      "summary": "A sci-fi desktop shell for Hyprland written in Rust and drawn with wgpu, and the privacy-focused Linux distribution whose desktop it is: eDEX-DE and eDEX-OS.",
+      "links": [
+        { "label": "eDEX-DE source", "url": "https://github.com/eDEX-OS/eDEX-DE" },
+        { "label": "eDEX-OS source", "url": "https://github.com/eDEX-OS/eDEX-OS" }
+      ],
+      "tech": ["Rust", "wgpu", "Hyprland", "Wayland", "nftables", "Tor", "Tailscale"],
+      "repo": { "url": "https://github.com/eDEX-OS/eDEX-DE", "license": "GPL-3.0" },
+      "sections": [
+        {
+          "type": "text",
+          "heading": "The shell — eDEX-DE",
+          "html": "<p>Hyprland tiles your applications; eDEX-DE draws everything around them: a multi-tab terminal on alacritty_terminal, a file browser, a system dashboard with privacy indicators for Tor, Tailscale, VPN, microphone and camera, an on-screen keyboard, a launcher, 14 settings categories wired to real backends, notifications, a power menu and a greetd login screen. Thirteen themes ship built in, the config live-reloads, and an IPC drives the shell from key bindings.</p>"
+        },
+        {
+          "type": "text",
+          "heading": "The distribution — eDEX-OS",
+          "html": "<p>A privacy-focused, performance-tuned Linux distribution based on CachyOS (Arch) whose desktop is eDEX-DE. Tor transparent mode redirects all TCP and DNS through Tor with a fail-closed nftables policy that rolls back if Tor cannot bootstrap; Tailscale, WireGuard and OpenVPN are built in; dnscrypt-proxy resolves with DNSSEC and no logging; MAC randomisation and kernel hardening are on by default; the Calamares installer does btrfs subvolumes and LUKS.</p>"
+        }
+      ]
+    },
+    "work:red-wagon-rentals": {
+      "title": "Red Wagon Rentals",
+      "status": "live",
+      "category": "client",
+      "year": "2026",
+      "summary": "A trailer-rental booking platform: 24/7 online booking for GPS-tracked trailers, for a division of ArtisTech Endeavors in Sheridan, Oregon.",
+      "links": [
+        { "label": "new.redwagonrentals.com", "url": "https://new.redwagonrentals.com" }
+      ],
+      "sections": [
+        {
+          "type": "text",
+          "heading": "What it does",
+          "html": "<p>Customers book trailer rentals around the clock: pick a trailer, pick a window, and the platform tracks the fleet by GPS. Built and maintained for a division of ArtisTech Endeavors, Sheridan, Oregon.</p>"
+        }
+      ]
+    },
+    "work:connected-riding": {
+      "title": "Connected Riding",
+      "status": "live",
+      "category": "client",
+      "year": "2026",
+      "summary": "A membership platform for Peggy Cummings' Connected Riding methodology: connectedriding.com.",
+      "links": [
+        { "label": "connectedriding.com", "url": "https://connectedriding.com" }
+      ],
+      "sections": [
+        {
+          "type": "text",
+          "heading": "What it does",
+          "html": "<p>The online home of Peggy Cummings' riding methodology, as a membership platform.</p>"
+        }
+      ]
+    }
+  }
 }
