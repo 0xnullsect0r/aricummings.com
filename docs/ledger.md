@@ -32,6 +32,7 @@
 - Nothing has run on the real server. Local runs only.
 - SMTP delivery untested until credentials exist.
 - Passkeys: software authenticator tests only until tried on a real phone.
+<<<<<<< HEAD
 - Content/media/GitHub areas (wt/content): built and tested on real sockets locally
   (41 tests, worktree ports 8110-8119, /tmp/content-wt). Not proven: the github-sync job
   against the live API (tests disable it via ARI_TEST_DISABLE_GITHUB_SYNC=1); media
@@ -42,10 +43,20 @@
 - Web (apps/web): full local runs against a stubbed internal content server (dev +
   production build on :8130, stub on :8131). Full visual QA of the public site happens at
   integration (HTML/CSS verified locally only).
-- Platform gaps found while building content are FIXED in Platform as of 30b4846 (edge
-  serves the internal surface; TokenIssuer issues claims; CLI modes receive args). The
-  InternalContentMiddleware/PreviewTokens workarounds in Features/Content still work and
-  can be simplified later.
+- Auth area (wt/auth): options/challenge lifecycle, clone-counter rules and DB wiring
+  are unit-tested, but no real authenticator has completed a WebAuthn ceremony against
+  these endpoints. RP ID confirmation still open above.
+- Session 30-day max / 7-day idle expiry and the 30s rotation-grace-then-theft path are
+  proven by manipulating stored timestamps, not by waiting on wall clock.
+- Lockout doubling is proven at the 5-failure crossing; longer lockout ladders untested.
+- Owner bootstrap CLI (`ari owner <email>`) shares the tested invite path but its own
+  argv parsing has not been run from a real command line.
+- Outbox-mail and prune jobs are registered with the JobHost on their crons; a job tick
+  firing in production has not been observed (test servers live under a minute).
+- Platform defects found by the builders (all three FIXED in Platform as of 30b4846 +
+  0f221b1, with golden tests): TokenIssuer claims, Sealed AesGcm overload binding,
+  RateLimiter deficit clamp. The local twins in Features/Auth (StaffTokens, SealedValues,
+  RateGate) still work and can be folded back into Platform as cleanup.
 
 ## Proven (2026-11-19, backbone commit 0a1c0d2)
 
