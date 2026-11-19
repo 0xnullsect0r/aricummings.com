@@ -32,7 +32,6 @@
 - Nothing has run on the real server. Local runs only.
 - SMTP delivery untested until credentials exist.
 - Passkeys: software authenticator tests only until tried on a real phone.
-<<<<<<< HEAD
 - Content/media/GitHub areas (wt/content): built and tested on real sockets locally
   (41 tests, worktree ports 8110-8119, /tmp/content-wt). Not proven: the github-sync job
   against the live API (tests disable it via ARI_TEST_DISABLE_GITHUB_SYNC=1); media
@@ -94,6 +93,11 @@
   fallback; snapshot `site.seo.url` wins). Dev ports: web 8130 (host 0.0.0.0), stub 8131.
 - **Standalone output**: `.next/standalone` needs `.next/static` + `public/` copied in by the
   deploy image (per skill convention), and `HOSTNAME=0.0.0.0` at runtime, not a loopback.
+- Analytics geo needs a real GeoLite2 mmdb at `ARI_GEODB_PATH` to prove lookups; without one
+  every geo field is null by design (tested null-safe, no third-party call ever). The
+  Platform RateLimiter clamp analytics flagged is FIXED (0f221b1); beacon throttling is live.
+- Admin analytics routes are guarded by the real auth permission check since the wiring
+  merge (`analytics.read`, `analytics.export` via WiringFeature).
 
 ## Deployment contract
 

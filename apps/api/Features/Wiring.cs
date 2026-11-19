@@ -21,9 +21,29 @@ public sealed class WiringFeature : IFeature
         services.AddSingleton<Content.IRouteGuards>(sp => new AuthRouteGuards(
             sp.GetRequiredService<StaffResolver>(),
             sp.GetRequiredService<AuthOptions>()));
+        services.AddSingleton<Analytics.IAnalyticsGuard>(sp => new AnalyticsRouteGuards(
+            sp.GetRequiredService<StaffResolver>(),
+            sp.GetRequiredService<AuthOptions>()));
     }
 
     public void Map(WebApplication app) { }
+
+    /// <summary>Same resolution as the content guard, in analytics' Task&lt;int?&gt; shape.</summary>
+    private sealed class AnalyticsRouteGuards(StaffResolver resolver, AuthOptions options) : Analytics.IAnalyticsGuard
+    {
+        public async Task<int?> Deny(HttpContext context, string permission)
+        {
+            var staff = context.Staff() ?? await resolver.Resolve(context);
+            if (staff is null)
+            {
+                CookieJar.WipeAccess(context, options);
+                return 401;
+            }
+            context.Items[Guards.StaffItemKey] = staff;
+            context.Items["Ari.Actor"] = staff.UserId;
+            return staff.HasPermission(permission) ? null : 403;
+        }
+    }
 
     /// <summary>
     /// IRouteGuards over the auth session resolution. Refusals write the real error

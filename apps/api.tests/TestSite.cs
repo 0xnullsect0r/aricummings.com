@@ -6,6 +6,7 @@ using Ari.Platform;
 using Ari.Platform.Crypto;
 using Ari.Platform.Database;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
@@ -66,6 +67,10 @@ public sealed class TestSite : IAsyncDisposable
             configure: services =>
             {
                 foreach (var feature in features) feature.Register(services);
+                // These suites exercise content/media logic; auth's own suite covers the
+                // real permission enforcement, so the no-op guard is re-registered last
+                // and wins, exactly as it did before the wiring merge.
+                services.AddSingleton<Ari.Features.Content.IRouteGuards>(Ari.Features.Content.NoopRouteGuards.Instance);
             },
             map: mapped =>
             {
