@@ -32,6 +32,26 @@
 - Nothing has run on the real server. Local runs only, once they exist.
 - SMTP delivery untested until credentials exist.
 - Passkeys: software authenticator tests only until tried on a real phone.
+- Auth area (wt/auth): options/challenge lifecycle, clone-counter rules and DB wiring
+  are unit-tested, but no real authenticator has completed a WebAuthn ceremony against
+  these endpoints. RP ID confirmation still open above.
+- Session 30-day max / 7-day idle expiry and the 30s rotation-grace-then-theft path are
+  proven by manipulating stored timestamps, not by waiting on wall clock.
+- Lockout doubling is proven at the 5-failure crossing; longer lockout ladders untested.
+- Owner bootstrap CLI (`ari owner <email>`) shares the tested invite path but its own
+  argv parsing has not been run from a real command line.
+- Outbox-mail and prune jobs are registered with the JobHost on their crons; a job tick
+  firing in production has not been observed (test servers live under a minute).
+- Platform defects found while building (worked around locally in Features/Auth:
+  `StaffTokens`, `SealedValues`, `RateGate`; fold back once Platform is fixed):
+  - `Platform/Tokens/TokenIssuer.Issue` ignores its `claims` argument — tokens carry
+    no sub/sid. Fix: set `descriptor.Claims`.
+  - `Platform/Crypto/Sealed` binds to the wrong AesGcm overload order for its argument
+    lists and throws `Plaintext and ciphertext must have the same length` on every
+    Encrypt/Decrypt. Fix: pass byte[]-overload order or explicit spans.
+  - `Platform/Api/RateLimiter.TryConsume` clamps the bucket at zero
+    (`Math.Max(0, tokens - 1)`), destroying the deficit, so it always returns true.
+    Fix: keep the negative value and test `>= 0`.
 
 ## Deployment contract
 
