@@ -125,8 +125,10 @@ ok "no key refuses to boot"
 # 2. Port discipline: web publishes nothing. (Bridge mode only: host mode shares
 #    the host stack by design, so isolation is proven in CI instead.)
 if [ "$HOST_MODE" != "host" ]; then
-  web_ports=$(docker inspect -f '{{json .NetworkSettings.Ports}}' ari-smoke-web)
-  [ "$web_ports" = "{}" ] || fail "web published ports: $web_ports"
+  # EXPOSEd-but-unpublished ports appear as "3000/tcp":null; only actual
+  # bindings mean the container is reachable.
+  web_ports=$(docker inspect -f '{{json .NetworkSettings.Ports}}' ari-smoke-web | grep -v ':null' | grep -oE '"[0-9]+/tcp":\{[^}]*\}' || true)
+  [ -z "$web_ports" ] || fail "web published ports: $web_ports"
   ok "web publishes no ports"
 else
   ok "web port isolation: skipped in host mode (CI runs bridge mode)"
