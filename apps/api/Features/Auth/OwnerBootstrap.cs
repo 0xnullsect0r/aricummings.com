@@ -12,10 +12,9 @@ public sealed class OwnerBootstrap : ICliMode
 {
     public string Name => "owner";
 
-    public async Task<int> Run(Env env)
+    public async Task<int> Run(Env env, string[] args)
     {
-        var args = Environment.GetCommandLineArgs().Skip(1).Where(a => a != Name).ToList();
-        var email = (args.FirstOrDefault() ?? Environment.GetEnvironmentVariable("ARI_OWNER_EMAIL") ?? "")
+        var email = (args.Skip(1).FirstOrDefault() ?? Environment.GetEnvironmentVariable("ARI_OWNER_EMAIL") ?? "")
             .Trim().ToLowerInvariant();
         if (email.Length < 3 || !email.Contains('@') || email.Contains(' ') || email.Contains('\n') || email.Contains('\r'))
         {
