@@ -13,7 +13,7 @@ API_IMAGE_SRC="${1:?usage: test-updater.sh <api-image> <web-image>}"
 WEB_IMAGE_SRC="${2:?usage: test-updater.sh <api-image> <web-image>}"
 WORK="$(mktemp -d)"
 HOST_MODE="${ARI_SMOKE_NET:-bridge}"
-if [ "$HOST_MODE" = "host" ]; then REG_PORT=5000; else REG_PORT=$((9500 + RANDOM % 400)); fi
+if [ "$HOST_MODE" = "host" ]; then REG_PORT=5000; else REG_PORT=$(( 9500 + ( $(date +%s) + $$ ) % 400 )); fi
 STACK="$WORK/stack"
 REG_NAME="ari-test-registry-$$"
 

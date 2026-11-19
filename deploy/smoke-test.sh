@@ -10,12 +10,13 @@ WEB_IMAGE="${2:?usage: smoke-test.sh <api-image> <web-image>}"
 # host firewall blocks the docker bridge's published ports (firewalld/Garuda).
 # Bridge mode is the real one (CI); host mode cannot verify port isolation.
 HOST_MODE="${ARI_SMOKE_NET:-bridge}"
-NET="ari-smoke-$RANDOM"
+NET="ari-smoke-$$"
 if [ "$HOST_MODE" = "host" ]; then
   # Off the standard ports: this machine may already run the old site on 8080.
   PUB=18080; ADM=18081; INT=18082; WEBPORT=13000
 else
-  PUB=$((9000 + RANDOM % 500)); ADM=$((PUB + 1)); INT=8082; WEBPORT=3000
+  # POSIX sh has no $RANDOM; derive the scratch port from time and pid.
+  PUB=$(( 9000 + ( $(date +%s) + $$ ) % 500 )); ADM=$((PUB + 1)); INT=8082; WEBPORT=3000
 fi
 WORK="$(mktemp -d)"
 DATA="$WORK/data"
