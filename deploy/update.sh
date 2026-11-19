@@ -41,6 +41,10 @@ label_of() {
 }
 
 check_site() {
+  # FORCE_FAIL makes the post-install check fail, so the full failure path runs:
+  # record the release, roll back, verify the rollback, notify owners. The :-0
+  # matters: the rollback branch unsets the variable before its own check.
+  [ "${FORCE_FAIL:-0}" = "1" ] && return 1
   # health AND a real page, 20 tries, 3 s apart: pages depend on web, health does not
   i=0
   while [ $i -lt 20 ]; do
@@ -62,9 +66,25 @@ backup_databases() {
     docker compose exec -T api sh -c \
       "command -v sqlite3 >/dev/null 2>&1 || exit 3" || die "no sqlite3 in image for backup"
     out="$BACKUP_DIR_HOST/$db-$ts.db"
-    docker compose exec -T api sqlite3 "/data/$db.db" ".timeout 10000\n.backup /tmp/backup.db" \
+    # The backup lands inside the volume, then is verified present before the
+    # copy out (older daemons can report exec done before tmpfs writes settle).
+    docker compose exec -T api sqlite3 -cmd ".timeout 10000" "/data/$db.db" ".backup /data/.update-backup.db" \
       || die "backup of $db failed"
-    docker compose cp api:/tmp/backup.db "$out" >/dev/null 2>&1 || die "copy of $db backup failed"
+    present=0
+    i=0
+    while [ $i -lt 5 ]; do
+      if docker compose exec -T api test -f /data/.update-backup.db; then present=1; break; fi
+      i=$((i + 1)); sleep 1
+    done
+    [ "$present" = "1" ] || die "backup of $db did not appear"
+    copied=0
+    i=0
+    while [ $i -lt 3 ]; do
+      if docker compose cp api:/data/.update-backup.db "$out" >/dev/null 2>&1; then copied=1; break; fi
+      i=$((i + 1)); sleep 1
+    done
+    [ "$copied" = "1" ] || die "copy of $db backup failed"
+    docker compose exec -T api rm -f /data/.update-backup.db >/dev/null 2>&1 || true
     [ -s "$out" ] || die "backup of $db is empty"
     chmod 600 "$out"
   done
@@ -116,8 +136,6 @@ backup_databases
 
 # ---- install ------------------------------------------------------------------
 
-[ "$FORCE_FAIL" = "1" ] && { log "FORCE_FAIL set: simulating a bad release"; exit 1; }
-
 if ! docker compose up -d --wait --wait-timeout 180 --remove-orphans >/dev/null 2>&1; then
   install_failed=1
 elif ! check_site; then
@@ -128,6 +146,7 @@ if [ "${install_failed:-0}" = "1" ]; then
   log "release failed; recording $release_hash and rolling back"
   echo "$release_hash" >>"$FAILED_FILE"
   docker compose logs --tail 200 >"$BACKUP_DIR_HOST/failed-$(date -u +%Y%m%dT%H%M%SZ).log" 2>/dev/null || true
+  unset FORCE_FAIL   # the simulation is over; the rollback check must be real
   API_IMAGE=ari-rollback/api:previous WEB_IMAGE=ari-rollback/web:previous \
     docker compose up -d --wait --wait-timeout 180 >/dev/null 2>&1
   if check_site; then
