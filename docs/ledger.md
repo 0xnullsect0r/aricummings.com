@@ -29,9 +29,20 @@
 
 ## Not proven yet
 
-- Nothing has run on the real server. Local runs only, once they exist.
+- Nothing has run on the real server. Local runs only.
 - SMTP delivery untested until credentials exist.
 - Passkeys: software authenticator tests only until tried on a real phone.
+
+## Proven (2026-11-19, backbone commit 0a1c0d2)
+
+- Edge rules against the real server on real sockets, twice: curl smoke and xUnit
+  (`apps/api.tests/EdgeTests.cs`, 7/7): exact /healthz, admin-path refusal on the public
+  surface (raw + decoded spellings), internal-path refusal, security headers on every
+  response, admin noindex + robots, /api/health, 502 when web is down.
+- Security headers reach Kestrel's own malformed-request rejections via the transport
+  wrapper (verified with a raw malformed request).
+- Local runs need the user-local .NET in `~/.dotnet` (SDK 10.0.113 + ASP.NET 10.0.13):
+  run `~/.dotnet/dotnet test apps/Ari.slnx`. The system muxer lacks ASP.NET.
 
 ## Deployment contract
 

@@ -1,0 +1,123 @@
+name: build
+
+on:
+  push:
+    branches: [main, rebuild, beta]
+    tags: ['v*']
+  pull_request:
+  schedule:
+    - cron: '23 4 1 * *'   # monthly: a fresh build gets tested even without a release
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: 0xnullsect0r
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Test (xUnit)
+        working-directory: apps
+        run: dotnet test Ari.slnx
+
+      - name: Vulnerability audit (api)
+        working-directory: apps
+        run: |
+          dotnet list Ari.slnx package --vulnerable > audit.txt || true
+          grep -q 'has no vulnerable packages' audit.txt
+          cat audit.txt
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Install (web)
+        working-directory: apps/web
+        run: |
+          if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+
+      - name: Audit (web, prod deps)
+        working-directory: apps/web
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Build (web)
+        working-directory: apps/web
+        run: npm run build
+
+      - name: Unit tests (web)
+        working-directory: apps/web
+        run: npm test --if-present
+
+  images:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build api image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          load: true
+          tags: ari-smoke-api:ci
+          build-args: |
+            SITE_RELEASE=${{ github.ref_name }}
+
+      - name: Build web image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: deploy/web-image/Dockerfile
+          load: true
+          tags: ari-smoke-web:ci
+          build-args: |
+            SITE_RELEASE=${{ github.ref_name }}
+
+      - name: Container smoke test
+        run: sh deploy/smoke-test.sh ari-smoke-api:ci ari-smoke-web:ci
+
+      - name: Updater test
+        run: sh deploy/test-updater.sh ari-smoke-api:ci ari-smoke-web:ci
+
+      - name: Log in to ghcr.io
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push images (tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          docker tag ari-smoke-api:ci $REGISTRY/$OWNER/aricummings.com-api:${GITHUB_REF_NAME}
+          docker tag ari-smoke-web:ci $REGISTRY/$OWNER/aricummings.com-web:${GITHUB_REF_NAME}
+          docker push $REGISTRY/$OWNER/aricummings.com-api:${GITHUB_REF_NAME}
+          docker push $REGISTRY/$OWNER/aricummings.com-web:${GITHUB_REF_NAME}
+
+      - name: Push images (latest)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          docker tag ari-smoke-api:ci $REGISTRY/$OWNER/aricummings.com-api:latest
+          docker tag ari-smoke-web:ci $REGISTRY/$OWNER/aricummings.com-web:latest
+          docker push $REGISTRY/$OWNER/aricummings.com-api:latest
+          docker push $REGISTRY/$OWNER/aricummings.com-web:latest

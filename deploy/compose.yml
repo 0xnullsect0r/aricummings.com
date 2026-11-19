@@ -1,0 +1,66 @@
+# Two containers, one edge. The api is the only thing reachable from outside;
+# web sits on the internal network with no ports, no data and no secrets.
+# The folder name (deploy) must stay fixed: compose names volumes after the
+# project and the updater looks for that volume.
+
+services:
+  api:
+    image: ${API_IMAGE:-ghcr.io/0xnullsect0r/aricummings.com-api:latest}
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s        # above the 25 s forced kill inside the app
+    read_only: true
+    mem_limit: 1536m
+    pids_limit: 256
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    ports:
+      - "${HTTP_BIND:-127.0.0.1:8080}:8080"
+      - "${ADMIN_BIND:-127.0.0.1:8081}:8081"   # omit for one-port mode
+    environment:
+      ARI_ENV: production
+      ARI_DATA_DIR: /data
+      ARI_BACKUP_DIR: /backups
+      ARI_PUBLIC_PORT: 8080
+      ARI_INTERNAL_PORT: 8082
+      ADMIN_PORT: 8081
+      ARI_WEB_ORIGIN: http://web:3000
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN}
+      ADMIN_ORIGIN: ${ADMIN_ORIGIN}
+      WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID}
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-}
+      ARI_GEODB_PATH: ${ARI_GEODB_PATH:-}
+      APP_KEY_FILE: /run/secrets/app_key
+    secrets: [app_key]
+    volumes:
+      - data:/data
+      - backups:/backups
+    networks: [default, private]
+
+  web:
+    image: ${WEB_IMAGE:-ghcr.io/0xnullsect0r/aricummings.com-web:latest}
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 15s
+    read_only: true
+    mem_limit: 768m
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    environment:
+      ARI_API_INTERNAL: http://api:8082
+    networks: [private]
+
+secrets:
+  app_key:
+    file: ./secrets/app_key
+
+volumes:
+  data:
+  backups:
+
+networks:
+  private:
+    internal: true

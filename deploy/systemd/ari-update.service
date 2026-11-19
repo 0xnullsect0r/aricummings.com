@@ -1,0 +1,13 @@
+[Unit]
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=root
+TimeoutStartSec=15min
+ExecStart=/opt/aricummings/deploy/update.sh
+
+[Install]
+WantedBy=multi-user.target
