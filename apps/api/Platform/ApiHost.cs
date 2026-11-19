@@ -146,7 +146,7 @@ public interface ICliMode
     /// <summary>The first positional argument that selects this mode.</summary>
     string Name { get; }
 
-    Task<int> Run(Env env);
+    Task<int> Run(Env env, string[] args);
 }
 
 /// <summary>Health is reported by whichever feature owns the content snapshot.</summary>

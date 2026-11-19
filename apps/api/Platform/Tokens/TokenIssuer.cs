@@ -40,6 +40,7 @@ public sealed class TokenIssuer(KeyRing keys)
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(keys.Derive(entry, Info)) { KeyId = entry.Kid },
                 SecurityAlgorithms.HmacSha256),
+            Claims = claims.ToDictionary(c => c.Type, c => (object)c.Value),
         };
         var handler = new JsonWebTokenHandler();
         return handler.CreateToken(descriptor);

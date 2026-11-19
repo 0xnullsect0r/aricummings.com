@@ -10,7 +10,7 @@ var mode = typeof(ProgramMarker).Assembly.GetTypes()
 
 if (mode is not null)
 {
-    return await mode.Run(env);
+    return await mode.Run(env, args);
 }
 
 var features = typeof(ProgramMarker).Assembly.GetTypes()

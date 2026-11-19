@@ -104,6 +104,10 @@ public sealed class EdgeMiddleware(
             case Surface.Admin:
                 await ApplyAdmin(context, canonical);
                 return;
+            case Surface.Internal:
+                // Only internal paths reach here (refused above); endpoints serve them.
+                await next(context);
+                return;
             case Surface.Combined:
                 CountHit(context, canonical);
                 await next(context);
