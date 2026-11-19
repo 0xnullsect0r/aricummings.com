@@ -103,8 +103,10 @@ public sealed class ApiHost
 
         app.MapGet("/api/health", (IHealthReporter health) => Results.Json(health.Report()));
 
-        // Pages go to the web container last: anything not matched above is proxied.
-        app.MapFallback(PageProxyRoute);
+        // Pages go to the web container last. The explicit catch-all matters:
+        // bare MapFallback skips file-looking paths, which would 404 every
+        // /_next/static asset instead of proxying it.
+        app.MapFallback("/{**path}", PageProxyRoute);
 
         var logger = app.Services.GetRequiredService<ILogger<ProgramMarker>>();
         app.Lifetime.ApplicationStopped.Register(() =>

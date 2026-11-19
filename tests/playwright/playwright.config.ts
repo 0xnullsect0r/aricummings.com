@@ -13,6 +13,11 @@ export default defineConfig({
   use: {
     baseURL,
     trace: 'retain-on-failure',
+    // ARI_PW_CHROMIUM points at a system chromium when the managed download
+    // is unavailable (this machine has /usr/bin/chromium).
+    ...(process.env.ARI_PW_CHROMIUM
+      ? { launchOptions: { executablePath: process.env.ARI_PW_CHROMIUM } }
+      : {}),
   },
   projects: [
     { name: 'phone', use: { ...devices['Pixel 7'] } },
