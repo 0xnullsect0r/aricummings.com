@@ -52,6 +52,15 @@
   argv parsing has not been run from a real command line.
 - Outbox-mail and prune jobs are registered with the JobHost on their crons; a job tick
   firing in production has not been observed (test servers live under a minute).
+- Updater test runs locally only in ARI_SMOKE_NET=host mode (this machine's firewalld
+  blocks docker's published ports and its docker is the legacy builder): all 7 scenarios
+  green (2026-11-19): no-change, good release + backup 600 + email, half-published pair
+  waits, forced-bad rolls back + email, no retry, fixed installs, registry outage.
+  Container smoke test: SMOKE OK in host mode; web-port isolation is the one check that
+  needs bridge mode (CI). CI runs both tests in bridge mode on every build.
+- Firewalld-vs-docker on the desktop host blocks published container ports; the homelab
+  needs `firewall-cmd --permanent --zone=trusted --add-interface=docker0` (and the
+  compose network's interface) or the equivalent, or the same host-mode fallback.
 - Platform defects found by the builders (all three FIXED in Platform as of 30b4846 +
   0f221b1, with golden tests): TokenIssuer claims, Sealed AesGcm overload binding,
   RateLimiter deficit clamp. The local twins in Features/Auth (StaffTokens, SealedValues,
