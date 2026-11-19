@@ -275,7 +275,7 @@ public sealed class MediaTests : IAsyncLifetime
 
             Environment.SetEnvironmentVariable("ARI_BUILD_MEDIA_DIR", folder);
             var cli = new Ari.Features.Media.BuildMediaCli();
-            var exit = await cli.Run(_site.Env);
+            var exit = await cli.Run(_site.Env, Array.Empty<string>());
             Assert.Equal(0, exit);
 
             await using var connection = _site.Db.App();

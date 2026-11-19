@@ -15,12 +15,17 @@ public sealed class BuildMediaCli : ICliMode
 {
     public string Name => "build-media";
 
-    public Task<int> Run(Env env)
+    public Task<int> Run(Env env, string[] args)
     {
-        var source = Environment.GetEnvironmentVariable("ARI_BUILD_MEDIA_DIR");
+        // "ari build-media --source <dir>" or the ARI_BUILD_MEDIA_DIR env var.
+        string? source = null;
+        for (var i = 1; i + 1 < args.Length; i++)
+            if (args[i] == "--source") source = args[i + 1];
+        source ??= args.Skip(1).FirstOrDefault(a => a != "--source");
+        source ??= Environment.GetEnvironmentVariable("ARI_BUILD_MEDIA_DIR");
         if (string.IsNullOrWhiteSpace(source) || !Directory.Exists(source))
         {
-            Console.Error.WriteLine("Set ARI_BUILD_MEDIA_DIR to a folder of images to process.");
+            Console.Error.WriteLine("Usage: Ari build-media --source <folder-of-images> (or set ARI_BUILD_MEDIA_DIR).");
             return Task.FromResult(2);
         }
 
