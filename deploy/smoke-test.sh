@@ -21,6 +21,10 @@ fi
 WORK="$(mktemp -d)"
 DATA="$WORK/data"
 mkdir -p "$DATA/media" "$WORK/backups"
+# The bind mounts must be writable by the container's uid 1000; GitHub's runner
+# user is 1001, so open the test dirs (production uses named volumes, which
+# inherit the image's ownership and are unaffected).
+chmod 0777 "$DATA" "$DATA/media" "$WORK/backups"
 cleanup() {
   docker rm -f ari-smoke-api ari-smoke-web >/dev/null 2>&1
   [ "$HOST_MODE" = "host" ] || docker network rm "$NET" >/dev/null 2>&1
