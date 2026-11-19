@@ -16,13 +16,20 @@ public sealed class RateLimiter(int capacity, double refillPerMinute)
     public bool TryConsume(string key)
     {
         var now = DateTimeOffset.UtcNow.UtcTicks;
-        var bucket = _buckets.AddOrUpdate(key,
-            _ => new Bucket(capacity - 1, now),
+        // AddOrUpdate always runs exactly one lambda, but the compiler cannot see that.
+        var allowed = false;
+        _buckets.AddOrUpdate(key,
+            _ =>
+            {
+                allowed = capacity >= 1;
+                return new Bucket(capacity - 1, now);
+            },
             (_, existing) =>
             {
                 var elapsedMinutes = (now - existing.LastRefillTicks) / (double)TimeSpan.TicksPerMinute;
-                var tokens = Math.Min(capacity, existing.Tokens + elapsedMinutes * refillPerMinute);
-                return new Bucket(Math.Max(0, tokens - 1), now);
+                var available = Math.Min(capacity, existing.Tokens + elapsedMinutes * refillPerMinute);
+                allowed = available >= 1;
+                return new Bucket(Math.Max(-refillPerMinute, available - 1), now);
             });
 
         if (_buckets.Count > MaxKeys)
@@ -32,7 +39,7 @@ public sealed class RateLimiter(int capacity, double refillPerMinute)
                 _buckets.TryRemove(stale, out _);
         }
 
-        return bucket.Tokens >= 0;
+        return allowed;
     }
 
     public TimeSpan? RetryAfter(string key)

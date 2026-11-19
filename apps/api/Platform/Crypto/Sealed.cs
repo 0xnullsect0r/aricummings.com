@@ -19,10 +19,11 @@ public sealed class Sealed(KeyRing keys)
         var entry = keys.Current;
         var encKey = keys.Derive(entry, Info);
         var iv = RandomNumberGenerator.GetBytes(12);
+        var aad = Encoding.UTF8.GetBytes(context);
         var body = new byte[plaintext.Length];
         var tag = new byte[16];
         using (var aes = new AesGcm(encKey, 16))
-            aes.Encrypt(plaintext, iv, Encoding.UTF8.GetBytes(context), body, tag);
+            aes.Encrypt(nonce: iv, plaintext: plaintext, ciphertext: body, tag: tag, associatedData: aad);
         return string.Join('.', Prefix, entry.Kid, B64.Url(iv), B64.Url(tag), B64.Url(body));
     }
 
@@ -42,7 +43,7 @@ public sealed class Sealed(KeyRing keys)
         {
             var plaintext = new byte[body.Length];
             using var aes = new AesGcm(encKey, 16);
-            aes.Decrypt(body, tag, iv, Encoding.UTF8.GetBytes(context), plaintext);
+            aes.Decrypt(nonce: iv, ciphertext: body, tag: tag, plaintext: plaintext, associatedData: Encoding.UTF8.GetBytes(context));
             return plaintext;
         }
         catch (CryptographicException) { return null; }
