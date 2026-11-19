@@ -46,15 +46,20 @@ if [ "$HOST_MODE" = "host" ]; then
   API_PORTS=""
   API_PUB_PORT=$PUB; API_ADM_PORT=$ADM; API_INT_PORT=$INT
 else
-  # Containers always listen on their fixed internal ports; -p maps them out.
-  WEB_NET="--network $NET"
+  # Same topology as compose: api on a normal bridge (published ports work;
+  # --internal networks disable NAT and with it -p) plus an internal network it
+  # shares with web only. web gets no network that reaches anything else.
+  NET="$NET-bridge"
+  PRIV="$NET-priv"
+  docker network create "$NET" >/dev/null || fail "network"
+  docker network create --internal "$PRIV" >/dev/null || fail "internal network"
+  WEB_NET="--network $PRIV"
   WEB_INTERNAL="http://ari-smoke-api:8082"
   WEB_PORT_ENV=""
   API_NET="--network $NET"
   API_WEB="http://ari-smoke-web:3000"
   API_PORTS="-p 127.0.0.1:$PUB:8080 -p 127.0.0.1:$ADM:8081"
   API_PUB_PORT=8080; API_ADM_PORT=8081; API_INT_PORT=8082
-  docker network create --internal "$NET" >/dev/null || fail "network"
 fi
 # shellcheck disable=SC2086
 # No --rm: the web-down and SIGTERM checks stop and restart this container.
@@ -86,6 +91,7 @@ if ! docker ps --format '{{.Names}}' | grep -qx ari-smoke-api; then
   tail -20 "$WORK/api-run.log" "$WORK/api-logs.txt" 2>/dev/null
   fail "api container is not running"
 fi
+[ "$HOST_MODE" = "host" ] || docker network connect "$PRIV" ari-smoke-api >/dev/null 2>&1 || fail "could not join api to the internal network"
 
 B="http://127.0.0.1:$PUB"
 A="http://127.0.0.1:$ADM"
