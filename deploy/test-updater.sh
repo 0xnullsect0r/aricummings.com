@@ -36,7 +36,9 @@ ok() { echo "ok: $*"; }
 if [ "$HOST_MODE" = "host" ]; then
   docker run -d --rm --network host --name "$REG_NAME" registry:2 >/dev/null || fail "registry"
 else
-  docker run -d --rm -p "127.0.0.1:$REG_PORT:5000" --name "$REG_NAME" registry:2 >/dev/null || fail "registry"
+  # Bind both loopback names: the stack pulls from 127.0.0.2 so its copy can
+  # only change by pulling, and the test's own pushes go to localhost.
+  docker run -d --rm -p "127.0.0.1:$REG_PORT:5000" -p "127.0.0.2:$REG_PORT:5000" --name "$REG_NAME" registry:2 >/dev/null || fail "registry"
 fi
 sleep 3
 
