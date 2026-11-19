@@ -108,7 +108,7 @@ function MediaCell({ item, onChanged }: { item: MediaItem; onChanged: () => void
 }
 
 export function MediaScreen(): ReactElement {
-  const state = useAsync<MediaItem[]>(() => api<MediaItem[]>("GET", "/api/admin/media"), []);
+  const state = useAsync<MediaItem[]>(() => api<{ media: MediaItem[] }>("GET", "/api/admin/media").then(r => r.media), []);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState("");

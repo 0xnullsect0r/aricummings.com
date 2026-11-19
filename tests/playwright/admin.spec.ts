@@ -18,11 +18,26 @@ test.describe('admin (needs owner credentials)', () => {
   test('publish then see it live', async ({ page }) => {
     await signIn(page);
     await page.goto(`${adminURL}/content/page:home`);
+
+    // The seed publishes everything, so the flow is unpublish → edit → publish.
+    // Idempotent: a previously failed run may have left it unpublished.
+    // Confirm buttons are two-step with the same label on each step.
+    const toolbar = page.locator('.doc-toolbar');
+    // Wait for the load to finish before reading state.
+    await toolbar.getByText(/live|unpublished/i).first().waitFor({ timeout: 15_000 });
+    if (await toolbar.getByText(/unpublished/i).count() === 0) {
+      await page.getByRole('button', { name: /^unpublish$/i }).first().click();
+      await page.locator('.modal-backdrop').getByRole('button', { name: /^unpublish$/i }).click();
+    }
+    await expect(toolbar.getByText(/unpublished/i)).toBeVisible({ timeout: 15_000 });
+
     const intro = page.getByLabel(/intro/i).first();
     await intro.fill(`Published by Playwright at ${Date.now()}`);
     await page.getByRole('button', { name: /save/i }).first().click();
-    await page.getByRole('button', { name: /publish/i }).first().click();
-    await expect(page.getByText(/published/i).first()).toBeVisible({ timeout: 15_000 });
+
+    await page.getByRole('button', { name: /^publish$/i }).first().click();
+    await page.locator('.modal-backdrop').getByRole('button', { name: /^publish$/i }).click();
+    await expect(page.locator('.doc-toolbar').getByText(/^live$/i)).toBeVisible({ timeout: 15_000 });
 
     // The public site (same baseURL through the proxy) shows the change.
     await page.goto('/');

@@ -81,7 +81,7 @@ export function SeoScreen(): ReactElement {
     async () => {
       const [docs, media] = await Promise.all([
         api<ContentListItem[]>("GET", "/api/admin/content"),
-        api<MediaItem[]>("GET", "/api/admin/media"),
+        api<{ media: MediaItem[] }>("GET", "/api/admin/media").then(r => r.media),
       ]);
       return { rows: buildRows(docs, new Set(media.map((m) => m.id))) };
     },

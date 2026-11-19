@@ -701,7 +701,7 @@ export function ContentEditScreen({ docKey }: { docKey: string }): ReactElement 
   const mediaState = useAsync<MediaItem[]>(
     async () => {
       try {
-        return await api<MediaItem[]>("GET", "/api/admin/media");
+        return await api<{ media: MediaItem[] }>("GET", "/api/admin/media").then(r => r.media);
       } catch {
         return [];
       }
@@ -788,7 +788,7 @@ export function ContentEditScreen({ docKey }: { docKey: string }): ReactElement 
 
   const saveDraft = (): Promise<void> =>
     run("save", async () => {
-      await api("PUT", `/api/admin/content/${encodeURIComponent(docKey)}/draft`, draft as ContentValue);
+      await api("PUT", `/api/admin/content/${encodeURIComponent(docKey)}/draft`, { content: draft });
       setMeta((m) => (m === null ? m : { ...m, updatedAt: Date.now(), updatedBy: "you", isNew: false }));
       setListItem((li) => (li === null ? li : { ...li, draftDirty: true }));
       setNotice("Draft saved.");
@@ -796,7 +796,7 @@ export function ContentEditScreen({ docKey }: { docKey: string }): ReactElement 
 
   const publish = (): Promise<void> =>
     run("publish", async () => {
-      await api("POST", `/api/admin/content/${encodeURIComponent(docKey)}/publish`, draft as ContentValue);
+      await api("POST", `/api/admin/content/${encodeURIComponent(docKey)}/publish`, { note: "" });
       await load();
       setNotice("Published. The site was rebuilt.");
     });
@@ -822,7 +822,7 @@ export function ContentEditScreen({ docKey }: { docKey: string }): ReactElement 
     });
 
   const schema = schemaFor(docKey);
-  const published = listItem?.hasPublished ?? false;
+  const published = listItem?.hasPublished === true;
 
   return (
     <>
@@ -871,7 +871,7 @@ export function ContentEditScreen({ docKey }: { docKey: string }): ReactElement 
               PREVIEW
             </Btn>
           ) : null}
-          {can("content.publish") && published === null ? (
+          {can("content.publish") && !published ? (
             <ConfirmBtn
               variant="primary"
               question={`PUBLISH ${docKey}?`}
@@ -883,7 +883,7 @@ export function ContentEditScreen({ docKey }: { docKey: string }): ReactElement 
               PUBLISH
             </ConfirmBtn>
           ) : null}
-          {can("content.publish") && published !== null ? (
+          {can("content.publish") && published ? (
             <ConfirmBtn
               variant="danger"
               question={`UNPUBLISH ${docKey}? The page goes away from the live site.`}
