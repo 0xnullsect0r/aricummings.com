@@ -30,7 +30,7 @@ test.describe('admin (needs owner credentials)', () => {
   });
 
   test('admin is noindexed', async ({ page }) => {
-    const response = await page.goto('/');
+    const response = await page.goto(adminURL!);
     expect(response?.headers()['x-robots-tag']).toContain('noindex');
   });
 });

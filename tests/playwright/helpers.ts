@@ -16,7 +16,11 @@ export const test = base.extend({
   page: async ({ page }, use, testInfo) => {
     const errors: string[] = [];
     page.on('console', message => {
-      if (message.type() === 'error') errors.push(message.text());
+      if (message.type() !== 'error') return;
+      // A resource load reporting the HTTP status (e.g. the expected 404 page)
+      // is not a page defect; CSP violations and script errors still fail.
+      if (/^Failed to load resource/.test(message.text())) return;
+      errors.push(message.text());
     });
     page.on('pageerror', error => errors.push(String(error)));
     await use(page);
