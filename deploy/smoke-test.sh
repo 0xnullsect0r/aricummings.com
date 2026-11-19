@@ -58,7 +58,7 @@ docker run -d --name ari-smoke-web \
   $WEB_NET \
   --init --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges \
   -e ARI_API_INTERNAL="$WEB_INTERNAL" $WEB_PORT_ENV \
-  "$WEB_IMAGE" >/dev/null || fail "web did not start"
+  "$WEB_IMAGE" >"$WORK/web-run.log" 2>&1 || { cat "$WORK/web-run.log"; fail "web did not start"; }
 
 echo "ari-smoke-key:$(openssl rand -base64 32)" >"$WORK/key"
 
@@ -75,7 +75,12 @@ docker run -d --name ari-smoke-api --rm \
   --mount type=bind,src="$DATA",dst=/data \
   --mount type=bind,src="$WORK/backups",dst=/backups \
   -v "$WORK/key":/run/secrets/key:ro \
-  "$API_IMAGE" >/dev/null || fail "api did not start"
+  "$API_IMAGE" >"$WORK/api-run.log" 2>&1 || { cat "$WORK/api-run.log"; fail "api did not start"; }
+if ! docker ps --format '{{.Names}}' | grep -qx ari-smoke-api; then
+  docker logs ari-smoke-api >"$WORK/api-logs.txt" 2>&1 || true
+  tail -20 "$WORK/api-run.log" "$WORK/api-logs.txt" 2>/dev/null
+  fail "api container is not running"
+fi
 
 B="http://127.0.0.1:$PUB"
 A="http://127.0.0.1:$ADM"
