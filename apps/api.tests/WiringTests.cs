@@ -12,9 +12,10 @@ namespace AriApi.Tests;
 /// </summary>
 public sealed class WiringTests : IAsyncLifetime
 {
-    private readonly TestServer _server = new();
+    private TestServer _server = null!;
 
-    public Task InitializeAsync() => Task.CompletedTask;
+    public async Task InitializeAsync() =>
+        _server = await TestServer.Start("wiring", rateLimitsDisabled: true);
 
     public async Task DisposeAsync() => await _server.DisposeAsync();
 
@@ -40,7 +41,7 @@ public sealed class WiringTests : IAsyncLifetime
     {
         _server.CreateUser("wiring-owner@example.com", role: "owner");
         var jar = new TestServer.Jar();
-        Assert.Equal(HttpStatusCode.OK, await SignIn("wiring-owner@example.com", jar));
+        Assert.Equal(HttpStatusCode.NoContent, await SignIn("wiring-owner@example.com", jar));
 
         var (contentStatus, _, _) = await _server.Send("GET", "/api/admin/content", null, jar);
         Assert.Equal(HttpStatusCode.OK, contentStatus);
@@ -55,7 +56,7 @@ public sealed class WiringTests : IAsyncLifetime
         _server.CreateUser("wiring-staff@example.com",
             permissionsJson: """["messages.read"]""");
         var jar = new TestServer.Jar();
-        Assert.Equal(HttpStatusCode.OK, await SignIn("wiring-staff@example.com", jar));
+        Assert.Equal(HttpStatusCode.NoContent, await SignIn("wiring-staff@example.com", jar));
 
         var (contentStatus, _, _) = await _server.Send("GET", "/api/admin/content", null, jar);
         Assert.Equal(HttpStatusCode.Forbidden, contentStatus);
