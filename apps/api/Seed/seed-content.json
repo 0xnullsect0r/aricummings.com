@@ -1,0 +1,4 @@
+{
+  "note": "Seed content for an empty database. The Content feature expands this with the real site documents; seeding only ever runs on an empty documents table.",
+  "documents": {}
+}
