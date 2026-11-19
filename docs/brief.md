@@ -95,3 +95,64 @@ must make production boot fail. Key file: dev key named as dev-only; prod from
 Code complete, area tests written and passing, `docs/ledger.md` "Not proven yet" updated,
 no TODOs, no stubs. Report: what was built, what's tested against what, what needs the
 integrator.
+
+## Contracts, pinned (builders implement exactly these)
+
+### Content snapshot — `GET /internal/content` (internal surface only), `If-None-Match` → 304
+
+```json
+{
+  "version": 1765560000000,
+  "documents": { "site": {}, "page:home": {}, "work:<slug>": {} },
+  "redirects": [{ "from": "/x", "to": "/y" }],
+  "media": { "<16hex>": { "w": 1920, "h": 1080, "widths": [400, 800, 1200], "og": true } },
+  "github": { "profile": {}, "repos": [], "fetchedAt": 1765560000000 }
+}
+```
+`documents` holds published JSON only. `github` is null when never fetched. `/internal/content/version` → `{"version":n}`. Version numbers come from the clock, compared for equality only.
+
+### Analytics beacon — `POST /api/analytics/beacon` (public surface, rate 120/60, response always 204)
+
+```json
+{ "v": 1, "visitor": "opaque-string", "journey": "opaque-string",
+  "events": [ { "t": "view", "path": "/", "title": "…", "referrer": "host", "campaign": "…" },
+              { "t": "active", "ms": 4200 }, { "t": "scroll", "pct": 88 },
+              { "t": "click", "label": "GitHub", "target": "https://…", "x": 120, "y": 40, "section": "header" },
+              { "t": "outbound", "label": "GitHub", "target": "https://…" } ] }
+```
+`t=conversion` is emitted by the web contact-success page. Client sends one beacon per page with all events buffered; screen size, language, timezone in fields `sw`,`sh`,`lang`,`tz` of the body root. Visitor/journey ids: first-party cookie `ari_v` (1 year) and `ari_j` (30 min), set client-side, opaque random.
+
+### Auth + admin API surface
+
+Cookies `__Host-ari_at` (path /, 10 min) and `__Secure-ari_rt` (path /api/auth, 7d rotation). 401 from any /api/admin route → SPA tries POST /api/auth/refresh once, then signs out.
+
+- `POST /api/auth/signin {email,password}` → `{next:"2fa",token}` | 204+cookies | 401 `{error,code}`
+- `POST /api/auth/2fa {token,code}` | recovery `{token,code}` → 204+cookies
+- `POST /api/auth/signout`, `POST /api/auth/refresh`, `GET /api/auth/me`
+- `POST /api/auth/passkey/options`, `POST /api/auth/passkey/verify` (sign-in), `POST /api/auth/account/passkeys/*` (register/list/delete)
+- `GET|PUT /api/auth/account/password`, `POST /api/auth/account/totp/start|confirm`, `GET /api/auth/account/totp/recovery`, `GET|DELETE /api/auth/account/sessions/{id}`
+- `GET /api/admin/content` · `GET|PUT /api/admin/content/{key}/draft` · `POST …/publish|unpublish|preview` · `GET …/revisions` · `POST …/rollback/{version}`
+- `GET|POST|DELETE /api/admin/redirects[/{id}]`
+- `GET|POST /api/admin/media` (multipart upload) · `PATCH|DELETE /api/admin/media/{id}`
+- `GET /api/admin/messages` · `PATCH|DELETE /api/admin/messages/{id}`
+- `GET /api/admin/settings` · `PUT /api/admin/settings/{key}` (owner, step-up for mail/keys)
+- `GET|POST /api/admin/users` · `PATCH /api/admin/users/{id}` · `POST /api/admin/users/{id}/reset` (owner, step-up)
+- `GET /api/admin/audit?before=&limit=`
+- `GET /api/admin/analytics/summary?days=` · `…/pages` · `…/referrers` · `…/clicks` · `…/geo` · `…/export.csv`
+- `GET /api/admin/overview` (dashboard: messages unread, last publish, analytics 7d, jobs state)
+- `POST /api/contact {name,email,body,_gotcha}` (public, rate 5/1)
+
+### Web/admin file ownership (no overlaps)
+
+- web-public owns `apps/web/**` except `apps/web/src/features/admin/**`
+- admin-spa owns `apps/web/src/features/admin/**` only
+- The admin loader route `apps/web/src/app/admin/[[...slug]]/page.tsx` is written by web-public, fixed content:
+
+```tsx
+"use client";
+export default dynamic(() => import("@/features/admin").then(m => m.default), { ssr: false });
+```
+
+### Local tooling
+
+API: build/test with `~/.dotnet/dotnet` (user SDK has ASP.NET; system one does not). Web: `bun`. Each builder uses its own port range (auth 810x, content 811x, analytics 812x, web 813x) and its own `/tmp/<area>` data dir. Never touch another worktree.
