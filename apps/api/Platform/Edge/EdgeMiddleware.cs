@@ -187,7 +187,10 @@ public sealed class EdgeMiddleware(
             && !pathValue.StartsWith("/media", StringComparison.Ordinal)
             && !IsAdminAsset(canonical))
         {
-            context.Request.Path = new PathString("/admin").Add(path);
+            // "/" becomes "/admin" (not "/admin/", which the web proxy would 301).
+            context.Request.Path = pathValue == "/"
+                ? new PathString("/admin")
+                : new PathString("/admin").Add(path);
         }
 
         await next(context);

@@ -143,10 +143,13 @@ printf 'GET /%%FF HTTP/1.1\r\nHost: x\r\n\r\n' | timeout 5 nc 127.0.0.1 "$PUB" 2
 ok "headers incl. malformed request"
 
 # 7. Admin surface.
-[ "$(curl -s -o /dev/null -w '%{http_code}' "$A/")" = "200" ] || fail "admin shell"
+got=$(curl -s -o /dev/null -w '%{http_code}' "$A/")
+[ "$got" = "200" ] || { docker logs ari-smoke-api 2>&1 | tail -5; fail "admin shell (got $got)"; }
 [ "$(curl -sI "$A/" | grep -ci 'x-robots-tag: noindex')" = "1" ] || fail "admin noindex"
-[ "$(curl -s -o /dev/null -w '%{http_code}' "$A/api/admin/users")" = "401" ] || fail "admin API not guarded"
-[ "$(curl -s -o /dev/null -w '%{http_code}' "$A/api/contact")" = "404" ] || fail "public API on admin"
+got=$(curl -s -o /dev/null -w '%{http_code}' "$A/api/admin/users")
+[ "$got" = "401" ] || fail "admin API not guarded (got $got)"
+got=$(curl -s -o /dev/null -w '%{http_code}' "$A/api/contact")
+[ "$got" = "404" ] || fail "public API on admin (got $got)"
 ok "admin surface"
 
 # 8. Public port refuses admin spellings.
