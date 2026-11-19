@@ -28,6 +28,8 @@ FAILED_FILE="${FAILED_FILE:-$DEPLOY_DIR/failed-releases}"
 BACKUP_DIR_HOST="${BACKUP_DIR_HOST:-$DEPLOY_DIR/update-backups}"
 FORCE_FAIL="${FORCE_FAIL:-0}"
 PUBLIC_URL="${PUBLIC_URL:?PUBLIC_URL must be set}"
+ADMIN_URL="${ADMIN_URL:-$(grep -m1 '^ADMIN_ORIGIN=' .env 2>/dev/null | cut -d= -f2-)}"
+ADMIN_URL="${ADMIN_URL:-$PUBLIC_URL}"
 
 log() { logger -t ari-update "$@" 2>/dev/null || echo "$@" >&2; }
 
@@ -45,11 +47,13 @@ check_site() {
   # record the release, roll back, verify the rollback, notify owners. The :-0
   # matters: the rollback branch unsets the variable before its own check.
   [ "${FORCE_FAIL:-0}" = "1" ] && return 1
-  # health AND a real page, 20 tries, 3 s apart: pages depend on web, health does not
+  # health AND a real page AND the admin shell, 20 tries, 3 s apart: pages depend
+  # on web, health does not, and the admin surface has its own port.
   i=0
   while [ $i -lt 20 ]; do
     if curl -fsS --max-time 10 "$PUBLIC_URL/api/health" >/dev/null 2>&1 \
-       && curl -fsS --max-time 10 "$PUBLIC_URL/" >/dev/null 2>&1; then
+       && curl -fsS --max-time 10 "$PUBLIC_URL/" >/dev/null 2>&1 \
+       && curl -fsS --max-time 10 "$ADMIN_URL/" >/dev/null 2>&1; then
       return 0
     fi
     i=$((i + 1))
@@ -127,8 +131,10 @@ grep -qx "$release_hash" "$FAILED_FILE" 2>/dev/null && { log "skipping known-bad
 
 api_label=$(label_of "$API_IMAGE")
 web_label=$(label_of "$WEB_IMAGE")
-if [ -n "$api_label" ] && [ -n "$web_label" ] && [ "$api_label" != "$web_label" ]; then
-  log "images carry different release labels ($api_label vs $web_label); waiting for the pair"
+# A missing label means an image built outside the release pipeline; treat it as
+# a mismatch and wait, never run an unlabelled pair.
+if [ -z "$api_label" ] || [ -z "$web_label" ] || [ "$api_label" != "$web_label" ]; then
+  log "images carry different release labels ('$api_label' vs '$web_label'); waiting for the pair"
   exit 0
 fi
 

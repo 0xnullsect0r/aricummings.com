@@ -86,13 +86,13 @@ public sealed class ApiMiddleware(RequestDelegate next, Env env, ILogger<ApiMidd
     /// The public site and the admin are the same site to a browser; only the origin tells
     /// them apart. With an Origin header it must equal this surface's origin; without one,
     /// Sec-Fetch-Site must be same-origin. Neither means not from a page: refused.
-    /// Webhooks are exempt; they verify a signature instead.
+    /// (No webhook routes exist; when one does, it opts out by verifying a signature —
+    /// re-add the exemption then, not before.)
     /// </summary>
     private static async Task<bool> CrossSiteCheck(HttpContext context, Env env, Surface surface)
     {
         if (context.Request.Method == HttpMethods.Get
-            || context.Request.Method == HttpMethods.Head
-            || context.Request.Path.StartsWithSegments("/api/webhooks"))
+            || context.Request.Method == HttpMethods.Head)
             return true;
 
         var expected = surface == Surface.Admin ? env.AdminOrigin : env.PublicOrigin;

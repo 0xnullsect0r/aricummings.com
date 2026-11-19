@@ -224,8 +224,7 @@ public sealed class EdgeMiddleware(
         string? clientIp = null;
         if (trusted)
         {
-            var first = forwarded.Split(',')[0].Trim();
-            if (IPAddress.TryParse(first, out var parsed)) clientIp = parsed.ToString();
+            clientIp = ClientIpFromForwarded(forwarded);
         }
 
         request.Headers.Remove("X-Forwarded-For");
@@ -244,6 +243,18 @@ public sealed class EdgeMiddleware(
             Surface.Admin => "admin",
             _ => "public",
         };
+    }
+
+    /// <summary>
+    /// The LAST entry of a forwarded list: with exactly one trusted proxy hop
+    /// that is the address the proxy appended — the real client. The first
+    /// entry is client-controlled and spoofable, so it is never used.
+    /// </summary>
+    internal static string? ClientIpFromForwarded(string forwarded)
+    {
+        if (forwarded.Length == 0) return null;
+        var last = forwarded.Split(',')[^1].Trim();
+        return IPAddress.TryParse(last, out var parsed) ? parsed.ToString() : null;
     }
 
     private static bool RawLooksInternal(string rawPath) =>

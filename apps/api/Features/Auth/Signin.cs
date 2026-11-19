@@ -60,8 +60,12 @@ public sealed class SignInService(
         }
         if (user.LockedUntil is long locked && locked > now)
         {
+            // Same answer as an unknown account: a distinct message here would be an
+            // enumeration oracle (this account exists AND is locked). The audit row
+            // keeps the detail server-side.
+            hasher.Verify(password, _dummyHash);
             connection.Audit(user.Id, "auth.locked_out", email, "locked", Requests.ClientIp(http));
-            return Results.Json(new { error = "Too many failed attempts. Try again later.", code = "locked_out" }, statusCode: 401);
+            return Invalid();
         }
 
         if (!hasher.Verify(password, storedHash))

@@ -79,6 +79,12 @@ export default async function proxy(req: NextRequest) {
   const previewToken = req.nextUrl.searchParams.get("preview") ?? undefined;
 
   const requestHeaders = new Headers(req.headers);
+  // Strip the privileged request headers unconditionally: a client sending
+  // x-preview-token directly would otherwise render draft content without the
+  // noindex/no-store the query-param path applies, and a URL-keyed cache in
+  // front could serve that draft to everyone.
+  requestHeaders.delete("x-preview-token");
+  requestHeaders.delete("x-nonce");
   requestHeaders.set("content-security-policy", contentSecurityPolicy(nonce, dev));
   requestHeaders.set("x-nonce", nonce);
   if (previewToken) requestHeaders.set("x-preview-token", previewToken);

@@ -47,9 +47,14 @@ public sealed class PasskeyService(
     // ---- Sign-in ------------------------------------------------------------
 
     /// <summary>Assertion options for a discoverable credential: the browser asks the
-    /// user which account, so no email is sent and none is revealed.</summary>
+    /// user which account, so no email is sent and none is revealed. Rate-limited per
+    /// network: each call stores a challenge row until the daily prune.</summary>
     public async Task<IResult> SignInOptions(HttpContext http)
     {
+        var limits = http.RequestServices.GetRequiredService<Platform.Api.RateLimits>();
+        var network = Requests.NetworkKey(http);
+        if (!limits.TryConsume(limits.SignInNetwork, $"passkey-options:{network}"))
+            return Results.Json(new { error = "Too many requests.", code = "rate_limited" }, statusCode: 429);
         var assertion = fido2.GetAssertionOptions(new GetAssertionOptionsParams
         {
             AllowedCredentials = Array.Empty<PublicKeyCredentialDescriptor>(),

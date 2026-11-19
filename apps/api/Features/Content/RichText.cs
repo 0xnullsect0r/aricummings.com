@@ -56,14 +56,17 @@ public static partial class RichText
         var withoutStyle = StyleBlocks().Replace(withoutScript, "");
         var cleaned = Sanitizer.Sanitize(withoutStyle).Trim();
 
-        // The sanitizer keeps relative hrefs; protocol-relative ones must not survive either.
+        // The sanitizer keeps relative hrefs; scheme-relative ones must not survive
+        // either — including the backslash form, which browsers normalize to "/".
         foreach (Match match in LinkTargets().Matches(cleaned))
         {
             var value = match.Value;
             var separator = value.IndexOf('=');
             if (separator < 0) continue;
             var target = value[(separator + 1)..].TrimStart(' ', '\t').TrimStart('\'', '"');
-            if (target.StartsWith("//", StringComparison.Ordinal))
+            if (target.StartsWith("//", StringComparison.Ordinal)
+                || target.StartsWith("/\\", StringComparison.Ordinal)
+                || target.Contains('\\'))
                 throw new ApiException(400, "A link target is protocol-relative; give it a scheme.", "bad_link");
         }
         return cleaned;
