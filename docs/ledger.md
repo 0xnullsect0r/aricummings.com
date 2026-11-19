@@ -32,6 +32,9 @@
 - Nothing has run on the real server. Local runs only, once they exist.
 - SMTP delivery untested until credentials exist.
 - Passkeys: software authenticator tests only until tried on a real phone.
+- Analytics geo needs a real GeoLite2 mmdb at `ARI_GEODB_PATH` to prove lookups; without one every geo field is null by design (tested null-safe, no third-party call ever).
+- Platform `RateLimiter.TryConsume` clamps its bucket at 0 (RateLimiter.cs `Math.Max`), so it never refuses; beacon flood throttling is wired to `RateLimits.Beacon` but inert until that one line is fixed upstream of Features.
+- Admin analytics routes are guarded by the no-op `IAnalyticsGuard` default until Auth registers the real permission check (`analytics.read`, `analytics.export`).
 
 ## Deployment contract
 
