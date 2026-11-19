@@ -52,7 +52,8 @@ else
   docker network create --internal "$NET" >/dev/null || fail "network"
 fi
 # shellcheck disable=SC2086
-docker run -d --name ari-smoke-web --rm \
+# No --rm: the web-down and SIGTERM checks stop and restart this container.
+docker run -d --name ari-smoke-web \
   $WEB_NET \
   --init --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges \
   -e ARI_API_INTERNAL="$WEB_INTERNAL" $WEB_PORT_ENV \

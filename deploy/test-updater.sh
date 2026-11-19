@@ -7,7 +7,8 @@ set -u
 API_IMAGE_SRC="${1:?usage: test-updater.sh <api-image> <web-image>}"
 WEB_IMAGE_SRC="${2:?usage: test-updater.sh <api-image> <web-image>}"
 WORK="$(mktemp -d)"
-REG_PORT=$((9500 + RANDOM % 400))
+HOST_MODE="${ARI_SMOKE_NET:-bridge}"
+if [ "$HOST_MODE" = "host" ]; then REG_PORT=5000; else REG_PORT=$((9500 + RANDOM % 400)); fi
 STACK="$WORK/stack"
 
 cleanup() {
@@ -20,8 +21,13 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 ok() { echo "ok: $*"; }
 
 # Local registry, reached under a second name so the server's copy changes only
-# by pulling (localhost: vs 127.0.0.1:).
-docker run -d --rm -p "127.0.0.1:$REG_PORT:5000" --name ari-test-registry-$$ registry:2 >/dev/null || fail "registry"
+# by pulling (localhost: vs 127.0.0.1:). Host mode dodges hosts whose firewall
+# blocks published ports (the CI run uses the normal bridge setup).
+if [ "$HOST_MODE" = "host" ]; then
+  docker run -d --rm --network host --name ari-test-registry-$$ registry:2 >/dev/null || fail "registry"
+else
+  docker run -d --rm -p "127.0.0.1:$REG_PORT:5000" --name ari-test-registry-$$ registry:2 >/dev/null || fail "registry"
+fi
 sleep 3
 docker tag "$API_IMAGE_SRC" "127.0.0.1:$REG_PORT/ari-api:v1"
 docker tag "$WEB_IMAGE_SRC" "127.0.0.1:$REG_PORT/ari-web:v1"
@@ -37,7 +43,44 @@ cp "$(dirname "$0")/update.sh" "$STACK/"
 chmod +x "$STACK/update.sh"
 echo "ari-test-key:$(openssl rand -base64 32)" >"$STACK/secrets/app_key"
 
-cat >"$STACK/.env" <<EOF
+if [ "$HOST_MODE" = "host" ]; then
+  # Host-network variant of the same topology: no published ports (the local
+  # firewall blocks them), fixed off-8080 listener ports, same services.
+  PUB_PORT=18180; ADM_PORT=18181; INT_PORT=18182; WEB_PORT=13000
+  python3 - "$STACK/compose.yml" "$PUB_PORT" "$ADM_PORT" "$INT_PORT" "$WEB_PORT" <<'PY'
+import sys
+path, pub, adm, internal, webport = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5]
+text = open(path).read()
+text = text.replace("""    ports:
+      - "${HTTP_BIND:-127.0.0.1:8080}:8080"
+      - "${ADMIN_BIND:-127.0.0.1:8081}:8081"   # omit for one-port mode
+""", "")
+text = text.replace("""    networks: [default, private]""", "    network_mode: host")
+text = text.replace("""    networks: [private]""", "    network_mode: host")
+text = text.replace("ARI_PUBLIC_PORT: 8080", f"ARI_PUBLIC_PORT: {pub}")
+text = text.replace("ARI_INTERNAL_PORT: 8082", f"ARI_INTERNAL_PORT: {internal}")
+text = text.replace("ADMIN_PORT: 8081", f"ADMIN_PORT: {adm}")
+text = text.replace("ARI_WEB_ORIGIN: http://web:3000", f"ARI_WEB_ORIGIN: http://127.0.0.1:{webport}")
+text = text.replace("""    environment:
+      ARI_API_INTERNAL: http://api:8082""", f"""    environment:
+      ARI_API_INTERNAL: http://127.0.0.1:{internal}
+      PORT: {webport}""")
+# drop the trailing networks section entirely in host mode
+import re
+text = re.sub(r"\nnetworks:\n  private:\n    internal: true\n", "\n", text)
+open(path, "w").write(text)
+PY
+  cat >"$STACK/.env" <<EOF
+API_IMAGE=localhost:$REG_PORT/ari-api:v1
+WEB_IMAGE=localhost:$REG_PORT/ari-web:v1
+PUBLIC_ORIGIN=http://localhost:$PUB_PORT
+ADMIN_ORIGIN=http://localhost:$ADM_PORT
+WEBAUTHN_RP_ID=localhost
+TRUSTED_PROXY_CIDRS=
+EOF
+  PUBLIC_URL="http://localhost:$PUB_PORT"
+else
+  cat >"$STACK/.env" <<EOF
 API_IMAGE=localhost:$REG_PORT/ari-api:v1
 WEB_IMAGE=localhost:$REG_PORT/ari-web:v1
 HTTP_BIND=127.0.0.1:$((REG_PORT + 100))
@@ -47,9 +90,10 @@ ADMIN_ORIGIN=http://localhost:$((REG_PORT + 101))
 WEBAUTHN_RP_ID=localhost
 TRUSTED_PROXY_CIDRS=
 EOF
+  PUBLIC_URL="http://localhost:$((REG_PORT + 100))"
+fi
 
 cd "$STACK" || fail "cd"
-PUBLIC_URL="http://localhost:$((REG_PORT + 100))"
 
 start_stack() {
   env PUBLIC_URL="$PUBLIC_URL" docker compose up -d --wait --wait-timeout 180 >/dev/null 2>&1 \
