@@ -52,7 +52,6 @@ public sealed class AuthFeature : IFeature
         services.AddSingleton(sp => new JobOptions(
             "prune", "17 3 * * *", null,
             ct => sp.GetRequiredService<PruneJob>().Run(ct), Alert: false));
-        services.AddHostedService<JobHost>();
     }
 
     public void Map(WebApplication app)

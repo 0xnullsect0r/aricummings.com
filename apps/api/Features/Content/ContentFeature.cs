@@ -25,9 +25,8 @@ public sealed class ContentFeature : IFeature
         services.AddSingleton<RedirectStore>();
         services.AddSingleton<IHealthReporter, ContentHealthReporter>();
         services.AddSingleton<IRedirectSource, SnapshotRedirectSource>();
-        // The shared job host: the earliest feature registers it; later features only add
-        // JobOptions singletons (GitHub does) so schedules are never duplicated.
-        services.AddHostedService<JobHost>();
+        // JobHost itself is registered once by the platform (ApiHost, after every
+        // feature has added its JobOptions); features only add JobOptions singletons.
         services.AddHostedService<ContentBoot>();
     }
 

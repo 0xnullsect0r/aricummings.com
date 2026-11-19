@@ -88,6 +88,11 @@ public sealed class ApiHost
 
         configure?.Invoke(builder.Services);
 
+        // One job host for the whole app, registered after the features so every
+        // JobOptions singleton is already in the collection. Features never register
+        // JobHost themselves; AnalyticsFeature keeps a type-guard for old branches.
+        builder.Services.AddHostedService<JobHost>();
+
         var app = builder.Build();
         app.UseMiddleware<EdgeMiddleware>();
         app.UseWhen(
