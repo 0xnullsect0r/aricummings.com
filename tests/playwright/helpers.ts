@@ -32,8 +32,8 @@ export const test = base.extend({
 export async function signIn(page: import('@playwright/test').Page) {
   if (!email || !password || !adminURL) throw new Error('admin env missing');
   await page.goto(`${adminURL}/`);
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password', { exact: false }).fill(password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByLabel('EMAIL').fill(email);
+  await page.getByLabel('PASSWORD').fill(password);
+  await page.getByRole('button', { name: 'SIGN IN' }).click();
   await expect(page.getByRole('navigation')).toBeVisible();
 }

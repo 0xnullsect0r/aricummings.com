@@ -35,6 +35,8 @@ public static class ContentEndpoints
                     hasDraft = d.HasDraft,
                     hasPublished = d.HasPublished,
                     draftDiffers = d.DraftDiffers,
+                    // Parsed JSON, so the SEO screen can read live page values.
+                    published = d.PublishedJson is null ? (JsonElement?)null : JsonDocument.Parse(d.PublishedJson).RootElement.Clone(),
                 }),
             });
         });

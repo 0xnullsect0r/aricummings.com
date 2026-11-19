@@ -27,7 +27,7 @@ import {
   TextArea,
   useAsync,
 } from "../ui";
-import type { ContentListItem, ContentValue, DraftResponse, MediaItem, PhotoItem, Revision, SectionBlock } from "../types";
+import type { ContentList, ContentListItem, ContentValue, DraftResponse, MediaItem, PhotoItem, RevisionsResponse, SectionBlock } from "../types";
 
 // ---------------------------------------------------------------- draft plumbing
 
@@ -670,8 +670,8 @@ export function ContentEditScreen({ docKey }: { docKey: string }): ReactElement 
   const [busy, setBusy] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
   const [showRevisions, setShowRevisions] = useState(false);
-  const revisions = useAsync<Revision[]>(
-    async () => (showRevisions ? api<Revision[]>("GET", `/api/admin/content/${encodeURIComponent(docKey)}/revisions`) : []),
+  const revisions = useAsync<RevisionsResponse["revisions"]>(
+    async () => (showRevisions ? api<RevisionsResponse>("GET", `/api/admin/content/${encodeURIComponent(docKey)}/revisions`).then(r => r.revisions) : []),
     [showRevisions, docKey],
   );
 
@@ -680,11 +680,11 @@ export function ContentEditScreen({ docKey }: { docKey: string }): ReactElement 
     try {
       const [draftRes, list] = await Promise.all([
         api<DraftResponse>("GET", `/api/admin/content/${encodeURIComponent(docKey)}/draft`),
-        api<ContentListItem[]>("GET", "/api/admin/content"),
+        api<ContentList>("GET", "/api/admin/content").then(r => r.documents),
       ]);
       const value = (draftRes.draft ?? {}) as Draft;
       setDraft(value);
-      setMeta({ updatedAt: draftRes.updatedAt, updatedBy: draftRes.updatedBy, isNew: false });
+      setMeta({ updatedAt: Date.now(), updatedBy: "", isNew: false });
       setListItem(list.find((d) => d.key === docKey) ?? null);
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) {
@@ -822,7 +822,7 @@ export function ContentEditScreen({ docKey }: { docKey: string }): ReactElement 
     });
 
   const schema = schemaFor(docKey);
-  const published = listItem?.publishedAt ?? null;
+  const published = listItem?.hasPublished ?? false;
 
   return (
     <>
@@ -836,8 +836,8 @@ export function ContentEditScreen({ docKey }: { docKey: string }): ReactElement 
           </p>
         </div>
         <div className="doc-toolbar">
-          {published !== null ? <Pill tone="ok">LIVE</Pill> : <Pill tone="dim">UNPUBLISHED</Pill>}
-          {listItem?.draftDirty === true || meta.isNew ? <Pill tone="warn">DRAFT</Pill> : null}
+          {published ? <Pill tone="ok">LIVE</Pill> : <Pill tone="dim">UNPUBLISHED</Pill>}
+          {listItem?.draftDiffers === true || meta.isNew ? <Pill tone="warn">DRAFT</Pill> : null}
         </div>
       </div>
 
@@ -937,8 +937,8 @@ export function ContentEditScreen({ docKey }: { docKey: string }): ReactElement 
                 {(revisions.data ?? []).map((rev) => (
                   <tr key={rev.version}>
                     <td className="td-mono">{String(rev.version)}</td>
-                    <td className="td-mono">{fmtDate(rev.at)}</td>
-                    <td className="td-dim">{rev.by}</td>
+                    <td className="td-mono">{fmtDate(rev.publishedAt)}</td>
+                    <td className="td-dim">{rev.author ?? "—"}</td>
                     <td className="td-dim td-wrap">{rev.note ?? "—"}</td>
                     <td>
                       {can("content.publish") ? (

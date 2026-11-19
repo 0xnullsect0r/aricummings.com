@@ -97,8 +97,9 @@ export function SignInScreen(): ReactElement {
           {step === "password" ? (
             <form onSubmit={(e) => void submitPassword(e)}>
               {error !== "" ? <p className="form-error" role="alert">{error}</p> : null}
-              <Field label="EMAIL">
+              <Field label="EMAIL" htmlFor="signin-email">
                 <Input
+                  id="signin-email"
                   type="email"
                   name="email"
                   autoComplete="username"
@@ -107,8 +108,9 @@ export function SignInScreen(): ReactElement {
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </Field>
-              <Field label="PASSWORD">
+              <Field label="PASSWORD" htmlFor="signin-password">
                 <Input
+                  id="signin-password"
                   type="password"
                   name="password"
                   autoComplete="current-password"

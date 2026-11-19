@@ -161,17 +161,13 @@ public sealed class EdgeMiddleware(
             return;
         }
 
-        // Only what the admin needs passes; customer APIs and any other file stay 404 here.
-        // "/" is the shell itself, rewritten below to /admin.
-        var allowed =
-            canonical == "/"
-            || canonical.StartsWith("/admin", StringComparison.Ordinal)
-            || canonical.StartsWith("/api/admin", StringComparison.Ordinal)
-            || canonical.StartsWith("/api/auth", StringComparison.Ordinal)
-            || canonical.StartsWith("/_next/", StringComparison.Ordinal)
-            || canonical.StartsWith("/media/", StringComparison.Ordinal)
-            || IsAdminAsset(canonical);
-        if (!allowed)
+        // The admin surface serves the SPA's clean URLs (/users, /content/page:home)
+        // and refuses everything that is not an admin API. Customer APIs and any
+        // other API path stay 404 here.
+        if (canonical.StartsWith("/api/", StringComparison.Ordinal)
+            && !canonical.StartsWith("/api/admin", StringComparison.Ordinal)
+            && !canonical.StartsWith("/api/auth", StringComparison.Ordinal)
+            && !canonical.Equals("/api/health", StringComparison.Ordinal))
         {
             response.StatusCode = StatusCodes.Status404NotFound;
             return;

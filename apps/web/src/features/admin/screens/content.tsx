@@ -7,7 +7,14 @@ import { useAuth } from "../auth";
 import { fmtRelative } from "../format";
 import { Link, useRouter } from "../router";
 import { Btn, errorText, Input, Panel, Pill, ScreenLoader, TableWrap, useAsync } from "../ui";
-import type { ContentListItem } from "../types";
+import type { ContentList, ContentListItem } from "../types";
+
+/** Display name for a document key: site → Site, page:home → Home, work:x → x. */
+function docTitle(key: string): string {
+  if (key === "site") return "Site";
+  if (key === "page:home") return "Home";
+  return key.startsWith("work:") ? key.slice("work:".length) : key;
+}
 
 function kindOf(key: string): "site" | "page" | "work" {
   if (key === "site") return "site";
@@ -20,7 +27,7 @@ const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
 export function ContentListScreen(): ReactElement {
   const { can } = useAuth();
   const router = useRouter();
-  const state = useAsync<ContentListItem[]>(() => api<ContentListItem[]>("GET", "/api/admin/content"), []);
+  const state = useAsync<ContentListItem[]>(() => api<ContentList>("GET", "/api/admin/content").then(r => r.documents), []);
   const [newSlug, setNewSlug] = useState("");
   const [slugError, setSlugError] = useState("");
 
@@ -74,11 +81,11 @@ export function ContentListScreen(): ReactElement {
                 <tbody>
                   {group.rows.map((doc) => (
                     <tr key={doc.key}>
-                      <td className="td-dim td-wrap">{doc.title}</td>
+                      <td className="td-dim td-wrap">{docTitle(doc.key)}</td>
                       <td className="td-mono td-wrap">{doc.key}</td>
                       <td>
-                        {doc.publishedAt !== null ? <Pill tone="ok">LIVE</Pill> : <Pill tone="dim">UNPUBLISHED</Pill>}
-                        {doc.draftDirty ? (
+                        {doc.hasPublished ? <Pill tone="ok">LIVE</Pill> : <Pill tone="dim">UNPUBLISHED</Pill>}
+                        {doc.draftDiffers ? (
                           <>
                             {" "}
                             <Pill tone="warn">DRAFT</Pill>
@@ -87,7 +94,6 @@ export function ContentListScreen(): ReactElement {
                       </td>
                       <td className="td-mono">
                         {fmtRelative(doc.updatedAt)}
-                        <span className="td-muted"> by {doc.updatedBy}</span>
                       </td>
                       <td>
                         <Link className="btn btn-ghost btn-small" to={`content/${encodeURIComponent(doc.key)}`}>

@@ -1,25 +1,24 @@
 /**
  * Shared client-side types for the admin API surface.
  *
- * The response shapes here follow docs/brief.md ("Contracts, pinned"). Where the
- * brief pins only the route, the shape below is this client's assumption and is
- * listed in the area report for the integrator to diff against the API.
+ * Every shape below matches the live API exactly (captured 2026-11-19 against
+ * the merged server): /api/auth/me is flat, wrappers are {documents|items},
+ * timestamps are epoch ms.
  */
 
 // ---------------------------------------------------------------- auth
 
-export interface MeUser {
-  id: string;
+/** GET /api/auth/me — flat */
+export interface Me {
+  id: number;
   email: string;
   name: string;
-  owner: boolean;
-}
-
-/** GET /api/auth/me */
-export interface Me {
-  user: MeUser;
-  /** Explicit permission strings the signed-in user holds. Owners hold everything. */
+  role: "owner" | "staff";
   permissions: string[];
+  hasPassword: boolean;
+  totp: { enabled: boolean; pending: boolean };
+  passkeys: number;
+  stepUpFresh: boolean;
 }
 
 export type SignInResult =
@@ -37,48 +36,64 @@ export interface OverviewJob {
 
 /** GET /api/admin/overview */
 export interface Overview {
-  messages: { unread: number };
-  content: { lastPublishedAt: number | null; lastPublishedBy: string | null; drafts: number };
-  analytics: { visitors7d: number; pageviews7d: number; conversions7d: number };
+  messagesUnread: number;
+  messagesUnreadWeek: number;
+  lastPublishAt: number | null;
+  analytics: { visits7d: number };
   jobs: OverviewJob[];
+  generatedAt: number;
 }
 
 // ---------------------------------------------------------------- analytics
 
 export interface AnalyticsSummary {
   days: number;
+  from: string;
+  to: string;
+  views: number;
   visitors: number;
   newVisitors: number;
-  pageviews: number;
-  activeMs: number;
-  conversions: number;
-  funnel: { label: string; count: number }[];
-  weeklyEmail: { enabled: boolean } | null;
+  journeys: number;
+  convertedJourneys: number;
+  contactConversions: number;
+  outboundConversions: number;
+  avgActiveMs: number;
+  avgScrollPct: number;
+  botHits: number;
+  viewsPerDay: { day: string; views: number; visitors: number }[];
+  hitsPerDay: { day: string; hits: number }[];
+  topEntryPages: { path: string; count: number }[];
+  topExitPages: { path: string; count: number }[];
 }
 
-export interface AnalyticsPage {
-  path: string;
-  views: number;
-  activeMs: number;
-  scrollPct: number | null;
+export interface AnalyticsPages {
+  days: number;
+  pages: { path: string; views: number; visitors: number; avgActiveMs: number; avgScrollPct: number; entries: number; exits: number; convertedJourneys: number }[];
+  topNextPages: { from: string; to: string; count: number }[];
 }
 
-export interface AnalyticsReferrer {
-  host: string;
-  visits: number;
+export interface AnalyticsReferrers {
+  days: number;
+  referrers: { source: string; visits: number; visitors: number }[];
+  campaigns: { campaign: string; visits: number }[];
 }
 
-export interface AnalyticsClick {
-  label: string;
-  target: string | null;
-  count: number;
+export interface AnalyticsClicks {
+  days: number;
+  clicks: { label: string; target: string | null; kind: "click" | "outbound" | "conversion"; count: number; journeys: number; lastAt: number }[];
+  sections: { section: string; count: number }[];
 }
 
-export interface AnalyticsGeoRow {
-  country: string | null;
-  region: string | null;
-  city: string | null;
-  visits: number;
+export interface AnalyticsGeo {
+  days: number;
+  geo: boolean;
+  attribution: string | null;
+  places: { country: string | null; region: string | null; city: string | null; network: string | null; views: number; visitors: number }[];
+}
+
+export interface AnalyticsFunnel {
+  days: number;
+  steps: { step: string; label: string; count: number }[];
 }
 
 // ---------------------------------------------------------------- content
@@ -167,32 +182,37 @@ export interface WorkDoc {
 
 export type ContentValue = SiteDoc | HomeDoc | WorkDoc | Record<string, unknown>;
 
+/** GET /api/admin/content → { documents: [...] } */
+export interface ContentList {
+  documents: ContentListItem[];
+}
+
 export interface ContentListItem {
   key: string;
-  title: string;
+  version: number;
   updatedAt: number;
-  updatedBy: string;
-  publishedAt: number | null;
-  /** draft exists and differs from published */
-  draftDirty: boolean;
+  hasDraft: boolean;
+  hasPublished: boolean;
+  draftDiffers: boolean;
+  /** published JSON (what a visitor sees), or null when unpublished */
   published: ContentValue | null;
 }
 
 export interface DraftResponse {
   key: string;
+  version: number;
   draft: ContentValue;
-  updatedAt: number;
-  updatedBy: string;
 }
 
-export interface Revision {
-  version: number;
-  at: number;
-  by: string;
-  note: string | null;
+export interface RevisionsResponse {
+  revisions: { version: number; note: string | null; author: number | null; publishedAt: number }[];
 }
 
 // ---------------------------------------------------------------- media
+
+export interface MediaList {
+  items: MediaItem[];
+}
 
 export interface MediaItem {
   id: string; // 16 hex
@@ -207,43 +227,57 @@ export interface MediaItem {
 
 // ---------------------------------------------------------------- messages
 
+export interface MessagesResponse {
+  items: Message[];
+  unread: number;
+}
+
 export interface Message {
-  id: string;
+  id: number;
   name: string;
   email: string;
   body: string;
-  receivedAt: number;
+  createdAt: number;
   read: boolean;
   archived: boolean;
 }
 
 // ---------------------------------------------------------------- settings
 
+export interface SettingsResponse {
+  items: SettingRow[];
+}
+
 export interface SettingRow {
   key: string;
+  secret: boolean;
+  /** present for non-secrets; secrets expose hasValue only */
   value: string | null;
-  /** secret rows: value never echoed, only whether one is stored */
-  hasPassword: boolean;
-  updatedAt: number;
-  updatedBy: string;
+  hasValue: boolean;
+  updatedAt: number | null;
+  updatedBy: number | null;
 }
 
 // ---------------------------------------------------------------- users
 
+export interface UsersResponse {
+  items: StaffUser[];
+  permissions: { key: string; description: string }[];
+}
+
 export interface StaffUser {
-  id: string;
+  id: number;
   email: string;
   name: string;
-  owner: boolean;
-  active: boolean;
+  role: "owner" | "staff";
   permissions: string[];
-  twoFactor: boolean;
+  active: boolean;
+  hasPassword: boolean;
+  hasTotp: boolean;
   createdAt: number;
-  lastSeenAt: number | null;
 }
 
 export interface InviteResult {
-  id: string;
   inviteUrl: string;
   inviteExpiresAt: number;
 }
@@ -255,19 +289,21 @@ export interface ResetResult {
 
 // ---------------------------------------------------------------- audit
 
+export interface AuditPage {
+  items: AuditEntry[];
+  /** id to use as ?before= for the next page, or null at the end */
+  next: number | null;
+}
+
 export interface AuditEntry {
-  id: string;
+  id: number;
   at: number;
-  actor: string;
+  actor: number | null;
+  actorEmail: string | null;
   action: string;
   target: string | null;
   detail: string | null;
   ip: string | null;
-}
-
-export interface AuditPage {
-  entries: AuditEntry[];
-  nextBefore: number | null;
 }
 
 // ---------------------------------------------------------------- account
@@ -289,7 +325,7 @@ export interface RecoveryCodes {
 }
 
 export interface PasskeyRecord {
-  id: string;
+  id: number; // credential rowid
   name: string;
   createdAt: number;
   lastUsedAt: number | null;

@@ -52,7 +52,7 @@ function buildRows(docs: ContentListItem[], mediaIds: Set<string>): SeoRow[] {
   }
 
   const works = docs
-    .filter((d) => d.key.startsWith("work:") && d.publishedAt !== null)
+    .filter((d) => d.key.startsWith("work:") && d.hasPublished)
     .sort((a, b) => a.key.localeCompare(b.key));
   for (const doc of works) {
     const work = doc.published as WorkDoc;

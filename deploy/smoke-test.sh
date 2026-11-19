@@ -151,6 +151,8 @@ got=$(curl -s -o /dev/null -w '%{http_code}' "$A/api/admin/users")
 [ "$got" = "401" ] || fail "admin API not guarded (got $got)"
 got=$(curl -s -o /dev/null -w '%{http_code}' "$A/api/contact")
 [ "$got" = "404" ] || fail "public API on admin (got $got)"
+got=$(curl -s -o /dev/null -w '%{http_code}' "$A/api/analytics/beacon")
+[ "$got" = "404" ] || fail "public beacon API on admin (got $got)"
 ok "admin surface"
 
 # 8. Public port refuses admin spellings.

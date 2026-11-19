@@ -173,7 +173,7 @@ function EditUser({ user, onClose, onChanged }: { user: StaffUser; onClose: () =
         </Field>
         <fieldset style={{ border: 0, padding: 0, margin: "0 0 16px" }}>
           <span className="field-label">PERMISSIONS</span>
-          {user.owner ? (
+          {user.role === "owner" ? (
             <p className="td-dim" style={{ margin: 0 }}>
               Owners hold every permission implicitly.
             </p>
@@ -200,7 +200,7 @@ function EditUser({ user, onClose, onChanged }: { user: StaffUser; onClose: () =
           </Btn>
         </div>
       </form>
-      {me?.user.owner === true && user.id !== me?.user.id ? (
+      {me?.role === "owner" && user.id !== me?.id ? (
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
           <p className="td-muted" style={{ margin: "0 0 8px" }}>
             Password reset — the user gets a one-time link (1 hour) that invalidates older ones.
@@ -298,19 +298,19 @@ export function UsersScreen(): ReactElement {
                 <tr key={user.id}>
                   <td className="td-mono td-wrap">
                     {user.email}
-                    {me?.user.id === user.id ? <span className="td-muted"> (you)</span> : null}
+                    {me?.id === user.id ? <span className="td-muted"> (you)</span> : null}
                   </td>
-                  <td>{user.owner ? <Pill tone="warn">OWNER</Pill> : <Pill tone="dim">STAFF</Pill>}</td>
+                  <td>{user.role === "owner" ? <Pill tone="warn">OWNER</Pill> : <Pill tone="dim">STAFF</Pill>}</td>
                   <td>{user.active ? <Pill tone="ok">ACTIVE</Pill> : <Pill tone="danger">DEACTIVATED</Pill>}</td>
-                  <td>{user.twoFactor ? <Pill tone="ok">ON</Pill> : <Pill tone="dim">OFF</Pill>}</td>
-                  <td className="td-dim td-wrap">{user.owner ? "everything" : user.permissions.join(", ") || "none"}</td>
-                  <td className="td-mono">{fmtRelative(user.lastSeenAt)}</td>
+                  <td>{user.hasTotp ? <Pill tone="ok">ON</Pill> : <Pill tone="dim">OFF</Pill>}</td>
+                  <td className="td-dim td-wrap">{user.role === "owner" ? "everything" : user.permissions.join(", ") || "none"}</td>
+                  <td className="td-mono">{"—"}</td>
                   <td>
                     <div className="row-actions">
                       <Btn variant="ghost" small onClick={() => setEditing(user)}>
                         EDIT
                       </Btn>
-                      {me?.user.id !== user.id ? (
+                      {me?.id !== user.id ? (
                         <ConfirmBtn
                           variant={user.active ? "danger" : "default"}
                           small

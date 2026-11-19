@@ -230,7 +230,7 @@ function TotpPanel(): ReactElement {
 
 function PasskeyPanel(): ReactElement {
   const state = useAsync<PasskeyRecord[]>(
-    async () => (await api<{ passkeys: PasskeyRecord[] }>("POST", "/api/auth/account/passkeys/list", {})).passkeys,
+    async () => (await api<{ items: PasskeyRecord[] }>("GET", "/api/auth/account/passkeys")).items,
     [],
   );
   const [name, setName] = useState("");
@@ -244,7 +244,7 @@ function PasskeyPanel(): ReactElement {
       const options = await api<Record<string, unknown>>("POST", "/api/auth/account/passkeys/register", { name });
       const credential = await navigator.credentials.create({ publicKey: toCreationOptions(options) });
       if (credential === null) throw new ApiError(0, "No passkey was created.", "passkey_cancelled");
-      await api("POST", "/api/auth/account/passkeys/verify", { name, credential: encodeAttestation(credential as PublicKeyCredential) });
+      await api("POST", "/api/auth/account/passkeys/register/verify", { name, credential: encodeAttestation(credential as PublicKeyCredential) });
       setName("");
       state.reload();
     } catch (err) {
@@ -258,7 +258,7 @@ function PasskeyPanel(): ReactElement {
   const remove = async (id: string): Promise<void> => {
     setError("");
     try {
-      await api("POST", "/api/auth/account/passkeys/delete", { id });
+      await api("DELETE", `/api/auth/account/passkeys/${String(id)}`);
       state.reload();
     } catch (err) {
       setError(errText(err));
@@ -319,7 +319,7 @@ function PasskeyPanel(): ReactElement {
                     small
                     question={`DELETE PASSKEY "${pk.name}"?`}
                     confirmLabel="DELETE"
-                    onConfirm={() => remove(pk.id)}
+                    onConfirm={() => remove(String(pk.id))}
                   >
                     DELETE
                   </ConfirmBtn>
@@ -422,7 +422,7 @@ export function AccountScreen(): ReactElement {
     <>
       <div className="screen-head">
         <h1>ACCOUNT</h1>
-        <span className="screen-sub">{me?.user.email ?? ""}</span>
+        <span className="screen-sub">{me?.email ?? ""}</span>
       </div>
       <div className="stack">
         <PasswordPanel />

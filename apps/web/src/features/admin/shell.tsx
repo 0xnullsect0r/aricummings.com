@@ -79,7 +79,7 @@ export function Shell({ path, children }: { path: string; children: ReactNode })
   );
 
   const first = path.split("/")[0] ?? "";
-  const unread = overview.data !== null ? overview.data.messages.unread : null;
+  const unread = overview.data !== null ? overview.data.messagesUnread : null;
 
   useEffect(() => {
     document.title = "ARI CUMMINGS — ADMIN";
@@ -120,8 +120,8 @@ export function Shell({ path, children }: { path: string; children: ReactNode })
       <div className="ari-main">
         <header className="ari-topbar">
           <span className="ari-topbar-user">
-            <strong>{me?.user.email ?? ""}</strong>
-            {me?.user.owner === true ? " · OWNER" : ""}
+            <strong>{me?.email ?? ""}</strong>
+            {me?.role === "owner" ? " · OWNER" : ""}
           </span>
           <Btn variant="ghost" onClick={() => void signOut().then(() => router.navigate("", true))}>
             SIGN OUT

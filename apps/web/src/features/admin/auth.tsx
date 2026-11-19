@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactElemen
   const can = useCallback(
     (permission: string): boolean => {
       if (!me) return false;
-      if (me.user.owner) return true;
+      if (me.role === "owner") return true;
       return me.permissions.includes(permission);
     },
     [me],

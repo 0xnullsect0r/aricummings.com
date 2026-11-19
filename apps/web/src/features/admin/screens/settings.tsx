@@ -25,7 +25,7 @@ function groupOf(key: string): string {
 }
 
 function isSecretRow(row: SettingRow): boolean {
-  return row.hasPassword || /password|secret|token|key/i.test(row.key);
+  return row.hasValue || /password|secret|token|key/i.test(row.key);
 }
 
 interface Draft {
@@ -124,7 +124,7 @@ function GroupEditor({ rows, onSaved }: { rows: SettingRow[]; onSaved: () => voi
   return (
     <Panel
       label={group.toUpperCase()}
-      actions={rows.some((r) => isSecretRow(r) && r.hasPassword) ? <Pill tone="dim">SECRET SAVED</Pill> : undefined}
+      actions={rows.some((r) => isSecretRow(r) && r.hasValue) ? <Pill tone="dim">SECRET SAVED</Pill> : undefined}
     >
       {error !== "" ? (
         <p className="form-error" role="alert">
@@ -144,7 +144,7 @@ function GroupEditor({ rows, onSaved }: { rows: SettingRow[]; onSaved: () => voi
             <div key={row.key} style={{ marginBottom: 16 }}>
               <Field
                 label={row.key}
-                hint={secret && row.hasPassword && typed === "" ? SECRET_HINT : `updated ${fmtRelative(row.updatedAt)} by ${row.updatedBy}`}
+                hint={secret && row.hasValue && typed === "" ? SECRET_HINT : `updated ${fmtRelative(row.updatedAt)} by ${row.updatedBy}`}
               >
                 <Input
                   type={secret ? "password" : "text"}
@@ -214,7 +214,7 @@ export function SettingsScreen(): ReactElement {
     );
   }
 
-  const owner = me?.user.owner === true;
+  const owner = me?.role === "owner";
   const groups = new Map<string, SettingRow[]>();
   for (const row of state.data) {
     const group = groupOf(row.key);

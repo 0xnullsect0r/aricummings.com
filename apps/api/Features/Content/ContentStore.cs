@@ -42,7 +42,7 @@ public sealed class ContentStore(Db db, ContentSnapshotService snapshots, IServi
         return row.Key is null ? null : new DocumentRow(row.Key, row.Draft, row.Published, row.Version, row.UpdatedAt, row.UpdatedBy);
     }
 
-    public sealed record DocumentListItem(string Key, long Version, long UpdatedAt, bool HasDraft, bool HasPublished, bool DraftDiffers);
+    public sealed record DocumentListItem(string Key, long Version, long UpdatedAt, bool HasDraft, bool HasPublished, bool DraftDiffers, string? PublishedJson);
 
     public async Task<List<DocumentListItem>> List(SqliteConnection connection)
     {
@@ -52,7 +52,8 @@ public sealed class ContentStore(Db db, ContentSnapshotService snapshots, IServi
                 r.Key, r.Version, r.UpdatedAt,
                 r.Draft is not null && r.Draft != "{}",
                 r.Published is not null,
-                r.Published is not null && r.Draft != r.Published))
+                r.Published is not null && r.Draft != r.Published,
+                r.Published))
             .ToList();
     }
 

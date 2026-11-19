@@ -53,14 +53,14 @@ function MessageRow({ msg, canManage, onChanged }: { msg: Message; canManage: bo
         {open ? (
           <div style={{ padding: "8px 0" }}>
             <p className="td-muted" style={{ margin: "0 0 6px" }}>
-              {fmtRelative(msg.receivedAt)}
+              {fmtRelative(msg.createdAt)}
             </p>
             <p className="message-body">{msg.body}</p>
             <a href={`mailto:${msg.email}`}>reply by email</a>
           </div>
         ) : null}
       </td>
-      <td className="td-mono">{fmtRelative(msg.receivedAt)}</td>
+      <td className="td-mono">{fmtRelative(msg.createdAt)}</td>
       <td>
         <div className="row-actions">
           {msg.read ? (

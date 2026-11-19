@@ -13,6 +13,7 @@ import { AuthProvider, useAuth } from "./auth";
 import { Link, RouterProvider, useRouter, segments } from "./router";
 import { Shell } from "./shell";
 import { SignInScreen } from "./screens/signin";
+import { InvitedScreen, ResetScreen } from "./screens/one-time";
 import { DashboardScreen } from "./screens/dashboard";
 import { StatisticsScreen } from "./screens/statistics";
 import { ContentListScreen } from "./screens/content";
@@ -130,6 +131,15 @@ export default function AdminApp(): ReactElement {
 
 function AppGate(): ReactElement {
   const { state } = useAuth();
+  const path = typeof window === "undefined" ? "" : window.location.pathname.replace(/^\/admin\/?/, "").replace(/^\/+|\/+$/g, "");
+
+  // One-time links render without a session: /invited and /reset.
+  if (path === "invited") {
+    return <InvitedScreen />;
+  }
+  if (path === "reset") {
+    return <ResetScreen />;
+  }
 
   if (state === "loading") {
     return (

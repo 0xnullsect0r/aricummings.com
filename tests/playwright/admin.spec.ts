@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { adminReady, signIn, test } from './helpers';
+import { adminReady, adminURL, signIn, test } from './helpers';
 
 // The admin needs a one-time owner created by the CLI at deploy; this suite
 // runs against a stack whose owner credentials arrive by env. Without them it
@@ -17,7 +17,7 @@ test.describe('admin (needs owner credentials)', () => {
 
   test('publish then see it live', async ({ page }) => {
     await signIn(page);
-    await page.goto('/content/page:home');
+    await page.goto(`${adminURL}/content/page:home`);
     const intro = page.getByLabel(/intro/i).first();
     await intro.fill(`Published by Playwright at ${Date.now()}`);
     await page.getByRole('button', { name: /save/i }).first().click();

@@ -27,8 +27,8 @@ export function AuditScreen(): ReactElement {
     try {
       const qs = query({ before: before === null ? undefined : String(before), limit: PAGE_SIZE });
       const page = await api<AuditPage>("GET", "/api/admin/audit", undefined, { query: qs });
-      setEntries((current) => (before === null ? page.entries : [...current, ...page.entries]));
-      setNextBefore(page.nextBefore);
+      setEntries((current) => (before === null ? page.items : [...current, ...page.items]));
+      setNextBefore(page.next);
       setInitial(false);
     } catch (err) {
       setError(err instanceof ApiError ? `${err.message} (${err.code})` : "Could not load the audit log.");
@@ -46,7 +46,7 @@ export function AuditScreen(): ReactElement {
     const needle = filter.trim().toLowerCase();
     if (needle === "") return entries;
     return entries.filter((e) =>
-      [e.actor, e.action, e.target ?? "", e.detail ?? ""].some((field) => field.toLowerCase().includes(needle)),
+      [e.actorEmail ?? "", e.action, e.target ?? "", e.detail ?? ""].some((field) => field.toLowerCase().includes(needle)),
     );
   }, [entries, filter]);
 

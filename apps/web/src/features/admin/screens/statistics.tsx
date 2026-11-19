@@ -10,14 +10,15 @@ import { api } from "../api";
 import { useAuth } from "../auth";
 import { fmtDuration, fmtNum, fmtPct } from "../format";
 import { errorText, Empty, Panel, Pill, ScreenLoader, TableWrap, useAsync } from "../ui";
-import type { AnalyticsClick, AnalyticsGeoRow, AnalyticsPage, AnalyticsReferrer, AnalyticsSummary } from "../types";
+import type { AnalyticsClicks, AnalyticsFunnel, AnalyticsGeo, AnalyticsPages, AnalyticsReferrers, AnalyticsSummary } from "../types";
 
 interface All {
   summary: AnalyticsSummary;
-  pages: AnalyticsPage[];
-  referrers: AnalyticsReferrer[];
-  clicks: AnalyticsClick[];
-  geo: AnalyticsGeoRow[];
+  pages: AnalyticsPages;
+  referrers: AnalyticsReferrers;
+  clicks: AnalyticsClicks;
+  geo: AnalyticsGeo;
+  funnel: AnalyticsFunnel;
 }
 
 const RANGES = [7, 30, 90];
@@ -29,14 +30,15 @@ export function StatisticsScreen(): ReactElement {
   const state = useAsync<All>(
     async () => {
       const q = `?days=${String(days)}`;
-      const [summary, pages, referrers, clicks, geo] = await Promise.all([
+      const [summary, pages, referrers, clicks, geo, funnel] = await Promise.all([
         api<AnalyticsSummary>("GET", "/api/admin/analytics/summary", undefined, { query: q }),
-        api<AnalyticsPage[]>("GET", "/api/admin/analytics/pages", undefined, { query: q }),
-        api<AnalyticsReferrer[]>("GET", "/api/admin/analytics/referrers", undefined, { query: q }),
-        api<AnalyticsClick[]>("GET", "/api/admin/analytics/clicks", undefined, { query: q }),
-        api<AnalyticsGeoRow[]>("GET", "/api/admin/analytics/geo", undefined, { query: q }),
+        api<AnalyticsPages>("GET", "/api/admin/analytics/pages", undefined, { query: q }),
+        api<AnalyticsReferrers>("GET", "/api/admin/analytics/referrers", undefined, { query: q }),
+        api<AnalyticsClicks>("GET", "/api/admin/analytics/clicks", undefined, { query: q }),
+        api<AnalyticsGeo>("GET", "/api/admin/analytics/geo", undefined, { query: q }),
+        api<AnalyticsFunnel>("GET", "/api/admin/analytics/funnel", undefined, { query: q }),
       ]);
-      return { summary, pages, referrers, clicks, geo };
+      return { summary, pages, referrers, clicks, geo, funnel };
     },
     [days],
   );
@@ -65,8 +67,8 @@ export function StatisticsScreen(): ReactElement {
       </ScreenLoader>
     );
   }
-  const { summary, pages, referrers, clicks, geo } = state.data;
-  const maxFunnel = summary.funnel.reduce((m, s) => Math.max(m, s.count), 0);
+  const { summary, pages, referrers, clicks, geo, funnel } = state.data;
+  const maxFunnel = funnel.steps.reduce((m, s) => Math.max(m, s.count), 0);
 
   return (
     <>
@@ -86,15 +88,15 @@ export function StatisticsScreen(): ReactElement {
           <span className="card-label">NEW VISITORS</span>
         </div>
         <div className="card">
-          <span className="card-num">{fmtNum(summary.pageviews)}</span>
+          <span className="card-num">{fmtNum(summary.views)}</span>
           <span className="card-label">PAGE VIEWS</span>
         </div>
         <div className="card">
-          <span className="card-num">{fmtDuration(summary.activeMs)}</span>
+          <span className="card-num">{fmtDuration(summary.avgActiveMs)}</span>
           <span className="card-label">AVG ACTIVE / VISIT</span>
         </div>
         <div className="card">
-          <span className="card-num">{fmtNum(summary.conversions)}</span>
+          <span className="card-num">{fmtNum(summary.convertedJourneys)}</span>
           <span className="card-label">CONVERSIONS</span>
         </div>
       </div>
@@ -102,32 +104,19 @@ export function StatisticsScreen(): ReactElement {
       <div className="stack">
         <Panel
           label="WEEKLY EMAIL"
-          actions={
-            summary.weeklyEmail !== null ? (
-              summary.weeklyEmail.enabled ? (
-                <Pill tone="ok">ENABLED</Pill>
-              ) : (
-                <Pill tone="dim">OFF</Pill>
-              )
-            ) : (
-              <Pill tone="dim">UNKNOWN</Pill>
-            )
-          }
+          actions={<Pill tone="ok">ENABLED</Pill>}
         >
           <p className="td-dim" style={{ margin: 0 }}>
-            {summary.weeklyEmail === null
-              ? "Weekly email status is not available."
-              : summary.weeklyEmail.enabled
-                ? "A weekly summary is emailed to owner accounts."
-                : "The weekly summary email is switched off."}
+            A weekly summary is emailed to owner accounts every Monday–Wednesday, covering
+            the last complete week.
           </p>
         </Panel>
 
         <Panel label="FUNNEL">
-          {summary.funnel.length === 0 ? (
+          {funnel.steps.length === 0 ? (
             <Empty label="No funnel steps recorded in this range." />
           ) : (
-            summary.funnel.map((step) => (
+            funnel.steps.map((step) => (
               <div className="bar-row" key={step.label}>
                 <span className="bar-label">{step.label}</span>
                 <span className="bar-track">
@@ -143,7 +132,7 @@ export function StatisticsScreen(): ReactElement {
         </Panel>
 
         <Panel label="PAGES">
-          {pages.length === 0 ? (
+          {pages.pages.length === 0 ? (
             <Empty label="No page views in this range." />
           ) : (
             <TableWrap>
@@ -156,12 +145,12 @@ export function StatisticsScreen(): ReactElement {
                 </tr>
               </thead>
               <tbody>
-                {pages.map((p) => (
+                {pages.pages.map((p) => (
                   <tr key={p.path}>
                     <td className="td-mono td-wrap">{p.path}</td>
                     <td className="td-num">{fmtNum(p.views)}</td>
-                    <td className="td-num">{fmtDuration(p.activeMs)}</td>
-                    <td className="td-num">{fmtPct(p.scrollPct)}</td>
+                    <td className="td-num">{fmtDuration(p.avgActiveMs)}</td>
+                    <td className="td-num">{fmtPct(p.avgScrollPct)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -170,7 +159,7 @@ export function StatisticsScreen(): ReactElement {
         </Panel>
 
         <Panel label="REFERRERS">
-          {referrers.length === 0 ? (
+          {referrers.referrers.length === 0 ? (
             <Empty label="No referrers in this range." />
           ) : (
             <TableWrap>
@@ -181,9 +170,9 @@ export function StatisticsScreen(): ReactElement {
                 </tr>
               </thead>
               <tbody>
-                {referrers.map((r) => (
-                  <tr key={r.host}>
-                    <td className="td-mono td-wrap">{r.host}</td>
+                {referrers.referrers.map((r) => (
+                  <tr key={r.source}>
+                    <td className="td-mono td-wrap">{r.source}</td>
                     <td className="td-num">{fmtNum(r.visits)}</td>
                   </tr>
                 ))}
@@ -193,17 +182,17 @@ export function StatisticsScreen(): ReactElement {
         </Panel>
 
         <Panel label="CLICKS — TOP LABELS AND TARGETS">
-          {clicks.length === 0 ? (
+          {clicks.clicks.length === 0 ? (
             <Empty label="No clicks recorded in this range." />
           ) : (
-            clicks.map((c) => (
+            clicks.clicks.map((c) => (
               <div className="bar-row" key={`${c.label}|${c.target ?? ""}`}>
                 <span className="bar-label">{c.label}</span>
                 <span className="bar-track">
                   <span
                     className="bar-fill"
                     style={{
-                      width: `${(c.count / (clicks[0]?.count ?? 1)) * 100}%`,
+                      width: `${(c.count / (clicks.clicks[0]?.count ?? 1)) * 100}%`,
                       display: "block",
                     }}
                   />
@@ -214,9 +203,12 @@ export function StatisticsScreen(): ReactElement {
           )}
         </Panel>
 
-        <Panel label="GEOGRAPHY">
-          {geo.length === 0 ? (
-            <Empty label="No visits with a known location in this range." />
+        <Panel
+          label="GEOGRAPHY"
+          actions={geo.geo ? <Pill tone="ok">MMDB LOADED</Pill> : <Pill tone="dim">NO GEO DB</Pill>}
+        >
+          {geo.places.length === 0 ? (
+            <Empty label="No visits in this range." />
           ) : (
             <>
               <TableWrap>
@@ -229,17 +221,17 @@ export function StatisticsScreen(): ReactElement {
                   </tr>
                 </thead>
                 <tbody>
-                  {geo.map((g, i) => (
+                  {geo.places.map((g, i) => (
                     <tr key={`${g.country ?? ""}|${g.region ?? ""}|${g.city ?? ""}|${String(i)}`}>
                       <td className="td-mono">{g.country ?? "—"}</td>
                       <td className="td-dim">{g.region ?? "—"}</td>
                       <td className="td-dim">{g.city ?? "—"}</td>
-                      <td className="td-num">{fmtNum(g.visits)}</td>
+                      <td className="td-num">{fmtNum(g.views)}</td>
                     </tr>
                   ))}
                 </tbody>
               </TableWrap>
-              <p className="attribution">Geo data: MaxMind GeoLite2. Visitor IPs never leave the server.</p>
+              <p className="attribution">{geo.attribution ?? "No geo database loaded; locations are unknown by design."} Visitor IPs never leave the server.</p>
             </>
           )}
         </Panel>

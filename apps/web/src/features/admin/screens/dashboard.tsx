@@ -30,19 +30,19 @@ export function DashboardScreen(): ReactElement {
 
       <div className="cards" style={{ marginBottom: 24 }}>
         <div className="card">
-          <span className="card-num">{fmtNum(d.messages.unread)}</span>
+          <span className="card-num">{fmtNum(d.messagesUnread)}</span>
           <span className="card-label">UNREAD MESSAGES</span>
         </div>
         <div className="card">
-          <span className="card-num">{d.analytics.visitors7d === 0 ? "0" : fmtNum(d.analytics.visitors7d)}</span>
+          <span className="card-num">{fmtNum(d.analytics.visits7d)}</span>
           <span className="card-label">VISITORS / 7 DAYS</span>
         </div>
         <div className="card">
-          <span className="card-num">{fmtNum(d.analytics.pageviews7d)}</span>
+          <span className="card-num">{fmtNum(d.analytics.visits7d)}</span>
           <span className="card-label">PAGE VIEWS / 7 DAYS</span>
         </div>
         <div className="card">
-          <span className="card-num">{fmtNum(d.analytics.conversions7d)}</span>
+          <span className="card-num">{"—"}</span>
           <span className="card-label">CONVERSIONS / 7 DAYS</span>
         </div>
       </div>
@@ -58,9 +58,9 @@ export function DashboardScreen(): ReactElement {
             }
           >
             <p className="td-dim" style={{ margin: 0 }}>
-              {d.messages.unread === 0
+              {d.messagesUnread === 0
                 ? "No unread messages."
-                : `${fmtNum(d.messages.unread)} unread message${d.messages.unread === 1 ? "" : "s"} waiting.`}
+                : `${fmtNum(d.messagesUnread)} unread message${d.messagesUnread === 1 ? "" : "s"} waiting.`}
             </p>
           </Panel>
         ) : null}
@@ -70,14 +70,12 @@ export function DashboardScreen(): ReactElement {
             <li>
               <span className="kv-key">LAST PUBLISH</span>
               <span className="td-mono">
-                {d.content.lastPublishedAt !== null
-                  ? `${fmtRelative(d.content.lastPublishedAt)}${d.content.lastPublishedBy !== null && d.content.lastPublishedBy !== "" ? ` by ${d.content.lastPublishedBy}` : ""}`
-                  : "never published"}
+                {d.lastPublishAt !== null ? fmtRelative(d.lastPublishAt) : "never published"}
               </span>
             </li>
             <li>
-              <span className="kv-key">DRAFTS WITH CHANGES</span>
-              <span className="td-mono">{fmtNum(d.content.drafts)}</span>
+              <span className="kv-key">MESSAGES THIS WEEK</span>
+              <span className="td-mono">{fmtNum(d.messagesUnreadWeek)}</span>
             </li>
           </ul>
           {can("content.edit") ? (
