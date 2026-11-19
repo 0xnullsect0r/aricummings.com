@@ -63,7 +63,8 @@ docker run -d --name ari-smoke-web \
 echo "ari-smoke-key:$(openssl rand -base64 32)" >"$WORK/key"
 
 # shellcheck disable=SC2086
-docker run -d --name ari-smoke-api --rm \
+# No --rm: a boot crash must leave the container inspectable for its logs.
+docker run -d --name ari-smoke-api \
   $API_NET $API_PORTS \
   --init --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges \
   -e ARI_ENV=production -e ARI_DATA_DIR=/data -e ARI_BACKUP_DIR=/backups \
