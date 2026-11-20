@@ -12,7 +12,7 @@ interface RedirectRow {
 }
 
 export function RedirectsScreen(): ReactElement {
-  const state = useAsync<RedirectRow[]>(() => api<RedirectRow[]>("GET", "/api/admin/redirects"), []);
+  const state = useAsync<RedirectRow[]>(() => api<{ redirects: RedirectRow[] }>("GET", "/api/admin/redirects").then(r => r.redirects), []);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [error, setError] = useState("");

@@ -10,7 +10,7 @@
 import type { ReactElement } from "react";
 import { api } from "../api";
 import { errorText, Empty, Panel, Pill, ScreenLoader, TableWrap, useAsync } from "../ui";
-import type { ContentListItem, HomeDoc, MediaItem, SiteDoc, WorkDoc } from "../types";
+import type { ContentList, ContentListItem, HomeDoc, MediaItem, SiteDoc, WorkDoc } from "../types";
 
 interface SeoRow {
   path: string;
@@ -80,7 +80,7 @@ export function SeoScreen(): ReactElement {
   const state = useAsync<{ rows: SeoRow[] }>(
     async () => {
       const [docs, media] = await Promise.all([
-        api<ContentListItem[]>("GET", "/api/admin/content"),
+        api<ContentList>("GET", "/api/admin/content").then(r => r.documents),
         api<{ media: MediaItem[] }>("GET", "/api/admin/media").then(r => r.media),
       ]);
       return { rows: buildRows(docs, new Set(media.map((m) => m.id))) };

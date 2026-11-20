@@ -44,6 +44,13 @@ test.describe('admin (needs owner credentials)', () => {
     await expect(page.getByText(/published by playwright/i).first()).toBeVisible({ timeout: 15_000 });
   });
 
+  test('users screen loads the staff table', async ({ page }) => {
+    await signIn(page);
+    await page.goto(`${adminURL}/users`);
+    await expect(page.getByText('contact@aricummings.com').first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: /invite/i }).first()).toBeVisible();
+  });
+
   test('admin is noindexed', async ({ page }) => {
     const response = await page.goto(adminURL!);
     expect(response?.headers()['x-robots-tag']).toContain('noindex');

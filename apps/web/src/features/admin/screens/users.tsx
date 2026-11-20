@@ -242,7 +242,7 @@ function EditUser({ user, onClose, onChanged }: { user: StaffUser; onClose: () =
 
 export function UsersScreen(): ReactElement {
   const { me } = useAuth();
-  const state = useAsync<StaffUser[]>(() => api<StaffUser[]>("GET", "/api/admin/users"), []);
+  const state = useAsync<StaffUser[]>(() => api<{ items: StaffUser[] }>("GET", "/api/admin/users").then(r => r.items), []);
   const [editing, setEditing] = useState<StaffUser | null>(null);
   const [actionError, setActionError] = useState("");
 

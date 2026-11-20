@@ -100,7 +100,7 @@ function MessageRow({ msg, canManage, onChanged }: { msg: Message; canManage: bo
 
 export function MessagesScreen(): ReactElement {
   const { can } = useAuth();
-  const state = useAsync<Message[]>(() => api<Message[]>("GET", "/api/admin/messages"), []);
+  const state = useAsync<Message[]>(() => api<{ items: Message[] }>("GET", "/api/admin/messages").then(r => r.items), []);
   const [box, setBox] = useState<"inbox" | "archived">("inbox");
 
   if (state.data === null) {

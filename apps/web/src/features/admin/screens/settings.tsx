@@ -204,7 +204,7 @@ function GroupEditor({ rows, onSaved }: { rows: SettingRow[]; onSaved: () => voi
 
 export function SettingsScreen(): ReactElement {
   const { me } = useAuth();
-  const state = useAsync<SettingRow[]>(() => api<SettingRow[]>("GET", "/api/admin/settings"), []);
+  const state = useAsync<SettingRow[]>(() => api<{ items: SettingRow[] }>("GET", "/api/admin/settings").then(r => r.items), []);
 
   if (state.data === null) {
     return (
