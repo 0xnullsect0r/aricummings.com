@@ -379,6 +379,7 @@ public static class DocumentSchema
         new("hero", new ObjectRule(
             new DocField("kicker", new StringRule(0, 200)),
             new DocField("lines", new ArrayRule(new DocField("line", new StringRule(1, 300)), MinItems: 1, MaxItems: 6)),
+            new DocField("roles", new OptionalRule(new ArrayRule(new DocField("role", new StringRule(1, 100)), MaxItems: 4))),
             new DocField("intro", new OptionalRule(new StringRule(0, 2000))))),
         new("about", new ObjectRule(
             new DocField("paras", new ArrayRule(new DocField("para", new StringRule(1, 2000)), MinItems: 1, MaxItems: 20)),

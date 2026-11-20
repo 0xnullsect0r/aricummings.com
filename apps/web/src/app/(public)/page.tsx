@@ -227,7 +227,7 @@ export default async function HomePage() {
       {stackGroups.length > 0 && (
         <section data-track="STACK" className="mt-16 scroll-mt-24 md:mt-24">
           <SectionRule label="STACK" id="stack" />
-          <div className="mt-6 grid gap-px border border-line bg-line md:grid-cols-3">
+          <div className="mt-6 grid gap-px border border-line bg-line md:grid-cols-2 lg:grid-cols-4">
             {stackGroups.map((group, index) => (
               <div key={group.label ?? index} className="bg-ground p-4 md:p-5">
                 <h3 className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">

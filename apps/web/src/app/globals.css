@@ -10,18 +10,18 @@
   Tokens in one @theme block; see docs/design-system.md.
 */
 @theme {
-  --color-ground: #0a0a0b;
-  --color-raised: #121214;
-  --color-raise2: #1a1a1d;
+  --color-ground: #131316;
+  --color-raised: #1a1a1e;
+  --color-raise2: #222227;
   --color-bone: #edede6;
-  --color-bone-dim: #b9b9b0;
-  --color-muted: #85857c;
-  --color-line: #2c2c30;
-  --color-line-strong: #4a4a50;
+  --color-bone-dim: #bcbcb3;
+  --color-muted: #8f8f88;
+  --color-line: #34343a;
+  --color-line-strong: #56565e;
   --color-edge: #edede6;
   --color-accent: #ff4d00;
   --color-accent-bright: #ff6a26;
-  --color-accent-ink: #0a0a0b;
+  --color-accent-ink: #131316;
   --color-danger: #ff3b3b;
   --color-ok: #37d67a;
   --font-mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;

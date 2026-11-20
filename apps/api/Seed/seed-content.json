@@ -15,13 +15,14 @@
     },
     "page:home": {
       "hero": {
-        "kicker": "Ari Cummings · software developer",
+        "kicker": "Ari Cummings — McMinnville, Oregon",
         "lines": [
-          "Messengers built to resist surveillance.",
-          "Operating systems from the kernel up.",
-          "Servers that run themselves."
+          "I build encrypted messengers, operating systems, and the servers they run on."
         ],
-        "intro": "I design and build secure communication, systems software, and the infrastructure underneath it — mostly in Rust, C# and TypeScript."
+        "intro": "Mostly Rust, C#, and TypeScript. I build the whole stack — protocol, application, and the Linux infrastructure underneath — and I like software that survives contact with the real internet.",
+        "roles": [
+          "software developer"
+        ]
       },
       "about": {
         "paras": [
@@ -38,21 +39,75 @@
       },
       "clientIntro": "Alongside my own projects I build and maintain production platforms for small businesses — a 24/7 trailer-rental booking system and a riding-methodology membership site.",
       "alsoBuilding": [
-        { "name": "Quark" },
-        { "name": "fleetboard" },
-        { "name": "the-perimeter" },
-        { "name": "PointsSlip" },
-        { "name": "MileageTracker" },
-        { "name": "Tailscale-Ubiquiti" },
-        { "name": "WatchArcade" }
+        {
+          "name": "Quark"
+        },
+        {
+          "name": "fleetboard"
+        },
+        {
+          "name": "the-perimeter"
+        },
+        {
+          "name": "PointsSlip"
+        },
+        {
+          "name": "MileageTracker"
+        },
+        {
+          "name": "Tailscale-Ubiquiti"
+        },
+        {
+          "name": "WatchArcade"
+        }
       ],
       "stack": [
-        { "label": "Systems", "items": ["Rust", "Java", "OpenSCAD"] },
-        { "label": "Apps", "items": ["Swift", "SwiftUI", "Kotlin"] },
-        { "label": "Web & services", "items": ["C#", "ASP.NET Core", "Avalonia", "Next.js", "TypeScript", "Python"] },
-        { "label": "Infrastructure", "items": ["Linux", "Proxmox", "pfSense", "Docker", "Nginx"] }
+        {
+          "label": "Systems",
+          "items": [
+            "Rust",
+            "Java",
+            "OpenSCAD"
+          ]
+        },
+        {
+          "label": "Apps",
+          "items": [
+            "Swift",
+            "SwiftUI",
+            "Kotlin"
+          ]
+        },
+        {
+          "label": "Web & services",
+          "items": [
+            "C#",
+            "ASP.NET Core",
+            "Avalonia",
+            "Next.js",
+            "TypeScript",
+            "Python"
+          ]
+        },
+        {
+          "label": "Infrastructure",
+          "items": [
+            "Linux",
+            "Proxmox",
+            "pfSense",
+            "Docker",
+            "Nginx"
+          ]
+        }
       ],
-      "workOrder": ["enclave", "rustos", "multiforge", "edex", "red-wagon-rentals", "connected-riding"]
+      "workOrder": [
+        "enclave",
+        "rustos",
+        "multiforge",
+        "edex",
+        "red-wagon-rentals",
+        "connected-riding"
+      ]
     },
     "work:enclave": {
       "title": "Enclave",
@@ -61,11 +116,29 @@
       "year": "2026",
       "summary": "An open-source messenger with the features people expect from Signal — chats, groups, voice and video calls, photos, voice notes, reactions, disappearing messages — and a much stronger design against surveillance.",
       "links": [
-        { "label": "Source", "url": "https://github.com/0xnullsect0r/enclave-messenger" },
-        { "label": "Releases", "url": "https://github.com/0xnullsect0r/enclave-messenger/releases/latest" }
+        {
+          "label": "Source",
+          "url": "https://github.com/0xnullsect0r/enclave-messenger"
+        },
+        {
+          "label": "Releases",
+          "url": "https://github.com/0xnullsect0r/enclave-messenger/releases/latest"
+        }
       ],
-      "tech": ["Rust", "Tor", "X448", "ML-KEM-1024", "Classic McEliece", "SLH-DSA", "KMAC256", "Slint"],
-      "repo": { "url": "https://github.com/0xnullsect0r/enclave-messenger", "license": "GPL-3.0-only" },
+      "tech": [
+        "Rust",
+        "Tor",
+        "X448",
+        "ML-KEM-1024",
+        "Classic McEliece",
+        "SLH-DSA",
+        "KMAC256",
+        "Slint"
+      ],
+      "repo": {
+        "url": "https://github.com/0xnullsect0r/enclave-messenger",
+        "license": "GPL-3.0-only"
+      },
       "sections": [
         {
           "type": "text",
@@ -101,10 +174,26 @@
       "year": "2026",
       "summary": "An x86-64 operating system written in Rust: a preemptive SMP kernel with ring-3 processes, a Linux-compatible system-call ABI, NVMe/AHCI/USB storage, FAT and ext2/3/4 filesystems, a full USB stack, an in-tree TCP/IP stack with wired, USB and Intel Wi-Fi 6E drivers, HTTPS, a POSIX-like shell and a small userland — all booted by UEFI.",
       "links": [
-        { "label": "Source", "url": "https://github.com/RustOS-Dev/RustOS" }
+        {
+          "label": "Source",
+          "url": "https://github.com/RustOS-Dev/RustOS"
+        }
       ],
-      "tech": ["Rust", "UEFI", "xHCI", "NVMe", "ext4", "smoltcp", "WPA3", "musl", "QuickJS-ng"],
-      "repo": { "url": "https://github.com/RustOS-Dev/RustOS", "license": "GPL-2.0-or-later" },
+      "tech": [
+        "Rust",
+        "UEFI",
+        "xHCI",
+        "NVMe",
+        "ext4",
+        "smoltcp",
+        "WPA3",
+        "musl",
+        "QuickJS-ng"
+      ],
+      "repo": {
+        "url": "https://github.com/RustOS-Dev/RustOS",
+        "license": "GPL-2.0-or-later"
+      },
       "sections": [
         {
           "type": "text",
@@ -140,11 +229,25 @@
       "year": "2026",
       "summary": "A free-software, Folia-style regionized multithreaded drop-in replacement for the NeoForge dedicated Minecraft server. Swap your neoforge server jar for MultiForge's; your existing world, mods, configs and launch command keep working, and the world ticks in parallel across ownership regions.",
       "links": [
-        { "label": "Source", "url": "https://github.com/0xnullsect0r/MultiForge" },
-        { "label": "Install", "url": "https://github.com/0xnullsect0r/MultiForge/releases/latest" }
+        {
+          "label": "Source",
+          "url": "https://github.com/0xnullsect0r/MultiForge"
+        },
+        {
+          "label": "Install",
+          "url": "https://github.com/0xnullsect0r/MultiForge/releases/latest"
+        }
       ],
-      "tech": ["Java", "NeoForge", "ASM", "Gradle"],
-      "repo": { "url": "https://github.com/0xnullsect0r/MultiForge", "license": "GPL-3.0" },
+      "tech": [
+        "Java",
+        "NeoForge",
+        "ASM",
+        "Gradle"
+      ],
+      "repo": {
+        "url": "https://github.com/0xnullsect0r/MultiForge",
+        "license": "GPL-3.0"
+      },
       "sections": [
         {
           "type": "text",
@@ -170,11 +273,28 @@
       "year": "2026",
       "summary": "A sci-fi desktop shell for Hyprland written in Rust and drawn with wgpu, and the privacy-focused Linux distribution whose desktop it is: eDEX-DE and eDEX-OS.",
       "links": [
-        { "label": "eDEX-DE source", "url": "https://github.com/eDEX-OS/eDEX-DE" },
-        { "label": "eDEX-OS source", "url": "https://github.com/eDEX-OS/eDEX-OS" }
+        {
+          "label": "eDEX-DE source",
+          "url": "https://github.com/eDEX-OS/eDEX-DE"
+        },
+        {
+          "label": "eDEX-OS source",
+          "url": "https://github.com/eDEX-OS/eDEX-OS"
+        }
       ],
-      "tech": ["Rust", "wgpu", "Hyprland", "Wayland", "nftables", "Tor", "Tailscale"],
-      "repo": { "url": "https://github.com/eDEX-OS/eDEX-DE", "license": "GPL-3.0" },
+      "tech": [
+        "Rust",
+        "wgpu",
+        "Hyprland",
+        "Wayland",
+        "nftables",
+        "Tor",
+        "Tailscale"
+      ],
+      "repo": {
+        "url": "https://github.com/eDEX-OS/eDEX-DE",
+        "license": "GPL-3.0"
+      },
       "sections": [
         {
           "type": "text",
@@ -195,7 +315,10 @@
       "year": "2026",
       "summary": "A trailer-rental booking platform: 24/7 online booking for GPS-tracked trailers, for a division of ArtisTech Endeavors in Sheridan, Oregon.",
       "links": [
-        { "label": "new.redwagonrentals.com", "url": "https://new.redwagonrentals.com" }
+        {
+          "label": "new.redwagonrentals.com",
+          "url": "https://new.redwagonrentals.com"
+        }
       ],
       "sections": [
         {
@@ -212,7 +335,10 @@
       "year": "2026",
       "summary": "A membership platform for Peggy Cummings' Connected Riding methodology: connectedriding.com.",
       "links": [
-        { "label": "connectedriding.com", "url": "https://connectedriding.com" }
+        {
+          "label": "connectedriding.com",
+          "url": "https://connectedriding.com"
+        }
       ],
       "sections": [
         {
