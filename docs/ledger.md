@@ -108,6 +108,17 @@
 - Admin analytics routes are guarded by the real auth permission check since the wiring
   merge (`analytics.read`, `analytics.export` via WiringFeature).
 
+## Released
+
+- **v0.1.0 (2026-11-19, run 44639227400): CI green end to end** — xUnit + audits,
+  both images built, bridge-mode container smoke, all 7 updater scenarios, images
+  pushed to ghcr.io (api + web, tags v0.1.0 and latest). Packages are PRIVATE
+  (GHCR default): the homelab pulls with a read:packages token.
+- CI-only fixes found by the real runner: POSIX sh (no $RANDOM), runner-uid
+  bind-mount permissions, --internal networks disabling published ports (smoke
+  now uses the compose two-network topology), registry bound on both loopback
+  names for the updater test.
+
 ## Deployment contract
 
 - Releases from `v*` tags only. Updater checks every minute, rolls back on failed health, backups private.
