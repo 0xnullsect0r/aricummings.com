@@ -27,18 +27,18 @@ export function WorkRow({
         <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className="font-mono text-base font-bold text-bone md:text-lg">{doc.title}</span>
           {doc.status && (
-            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+            <span className="font-mono text-xs uppercase tracking-[0.08em] text-muted">
               &mdash; {doc.status}
             </span>
           )}
           {tag && (
-            <span className="border border-line-strong px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+            <span className="border border-line-strong px-1.5 py-0.5 font-mono text-xs uppercase tracking-[0.08em] text-muted">
               {tag}
             </span>
           )}
         </span>
         {doc.summary && (
-          <span className="mt-0.5 block truncate font-sans text-sm text-bone-dim">{doc.summary}</span>
+          <span className="mt-1 line-clamp-2 block max-w-[65ch] font-sans text-sm leading-normal text-bone-dim">{doc.summary}</span>
         )}
       </span>
       {tech.length > 0 && (
@@ -46,7 +46,7 @@ export function WorkRow({
           {tech.map((item) => (
             <span
               key={item}
-              className="border border-line px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-muted"
+              className="border border-line px-1.5 py-0.5 font-mono text-xs uppercase tracking-[0.08em] text-muted"
             >
               {item}
             </span>

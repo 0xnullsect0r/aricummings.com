@@ -53,7 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
 function Failure({ title, body }: { title: string; body: string }) {
   return (
     <section data-track={title} className="mx-auto max-w-[72rem] px-4 py-24 md:px-6">
-      <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">{title}</p>
+      <p className="font-mono text-xs uppercase tracking-[0.08em] text-muted">{title}</p>
       <h1 className="mt-3 font-mono text-2xl font-bold text-bone md:text-4xl">{title}</h1>
       <p className="mt-4 max-w-[65ch] text-bone-dim">{body}</p>
     </section>
@@ -90,6 +90,8 @@ export default async function HomePage() {
   const stackGroups = (home.stack ?? []).filter((group) => group.items?.length);
   const about = home.about;
   const facts = about?.facts ?? [];
+  // The name is the h1 directly below, so a kicker that repeats it drops the name.
+  const kicker = home.hero?.kicker?.replace(new RegExp(`^${name}\\s*[—–-]\\s*`, "i"), "");
 
   const person = {
     "@context": "https://schema.org",
@@ -102,11 +104,11 @@ export default async function HomePage() {
   };
 
   return (
-    <div className="mx-auto max-w-[72rem] px-4 pb-20 md:px-6 md:pb-24">
+    <div className="mx-auto max-w-[72rem] px-4 md:px-6">
       {preview && (
         <p
           role="note"
-          className="mt-4 border border-accent px-3 py-2 font-mono text-[11px] uppercase tracking-[0.08em] text-accent-bright"
+          className="mt-4 border border-accent px-3 py-2 font-mono text-xs uppercase tracking-[0.08em] text-accent-bright"
         >
           Preview — unpublished draft
         </p>
@@ -115,9 +117,9 @@ export default async function HomePage() {
 
       {/* HERO */}
       <section data-track="HERO" className="pt-14 md:pt-20">
-        {home.hero?.kicker && (
-          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted md:text-xs">
-            {home.hero.kicker}
+        {kicker && (
+          <p className="font-mono text-xs uppercase tracking-[0.08em] text-muted md:text-xs">
+            {kicker}
           </p>
         )}
         <h1 className="mt-3 font-mono text-[clamp(2.75rem,7vw,5.5rem)] font-bold uppercase leading-[0.95] text-bone">
@@ -139,6 +141,20 @@ export default async function HomePage() {
         {home.hero?.intro && (
           <p className="mt-6 max-w-[65ch] leading-[1.65] text-bone-dim">{home.hero.intro}</p>
         )}
+        <p className="mt-8 flex flex-wrap gap-3">
+          <a
+            href="#work"
+            className="inline-flex h-11 items-center bg-accent px-5 font-mono text-xs font-bold uppercase tracking-[0.08em] text-accent-ink hover:bg-accent-bright"
+          >
+            See the work &#8595;
+          </a>
+          <a
+            href="#contact"
+            className="inline-flex h-11 items-center border border-line-strong px-5 font-mono text-xs font-bold uppercase tracking-[0.08em] text-bone hover:border-bone"
+          >
+            Get in touch
+          </a>
+        </p>
       </section>
 
       {/* ABOUT */}
@@ -167,7 +183,7 @@ export default async function HomePage() {
                       className={index === 0 ? "pb-3" : "border-t border-line py-3"}
                     >
                       {label && (
-                        <dt className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
+                        <dt className="font-mono text-xs uppercase tracking-[0.08em] text-muted">
                           {label}
                         </dt>
                       )}
@@ -227,10 +243,23 @@ export default async function HomePage() {
       {stackGroups.length > 0 && (
         <section data-track="STACK" className="mt-16 scroll-mt-24 md:mt-24">
           <SectionRule label="STACK" id="stack" />
-          <div className="mt-6 grid gap-px border border-line bg-line md:grid-cols-2 lg:grid-cols-4">
+          <div
+            className={`mt-6 grid gap-px border border-line bg-line md:grid-cols-2 ${
+              ["lg:grid-cols-1", "lg:grid-cols-2", "lg:grid-cols-3", "lg:grid-cols-4"][
+                Math.min(stackGroups.length, 4) - 1
+              ]
+            }`}
+          >
             {stackGroups.map((group, index) => (
-              <div key={group.label ?? index} className="bg-ground p-4 md:p-5">
-                <h3 className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
+              <div
+                key={group.label ?? index}
+                className={`bg-ground p-4 md:p-5 ${
+                  stackGroups.length % 2 === 1 && index === stackGroups.length - 1
+                    ? "md:col-span-2 lg:col-span-1"
+                    : ""
+                }`}
+              >
+                <h3 className="font-mono text-xs uppercase tracking-[0.08em] text-muted">
                   {group.label ?? "STACK"}
                 </h3>
                 <ul className="mt-3 space-y-1">
@@ -254,7 +283,7 @@ export default async function HomePage() {
             {alsoBuilding.map((item, index) => (
               <div
                 key={`${item.name}-${index}`}
-                className="flex min-h-[44px] items-center gap-3 border-t border-line py-2.5"
+                className="flex min-h-[44px] items-baseline gap-3 border-t border-line py-2.5"
               >
                 <span className="w-8 shrink-0 font-mono text-xs text-muted">
                   {String(index + 1).padStart(2, "0")}
@@ -272,7 +301,7 @@ export default async function HomePage() {
                   <span className="font-mono text-sm text-bone-dim">{item.name}</span>
                 )}
                 {item.note && (
-                  <span className="ml-auto hidden truncate pl-4 font-sans text-sm text-muted sm:block">
+                  <span className="ml-auto min-w-0 pl-4 text-right font-sans text-sm text-muted">
                     {item.note}
                   </span>
                 )}
@@ -294,17 +323,16 @@ export default async function HomePage() {
           <div className="bg-ground p-4 md:col-span-5 md:p-6">
             <p className="max-w-[45ch] text-bone-dim">
               Projects, contract work, or questions about anything on this site.
-              Messages go straight to the inbox behind this form.
             </p>
             {site.location && (
-              <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
+              <p className="mt-5 font-mono text-xs uppercase tracking-[0.08em] text-muted">
                 {site.location}
               </p>
             )}
             {site.contactEmail && (
               <a
                 href={`mailto:${site.contactEmail}`}
-                className="mt-2 inline-block font-mono text-sm text-accent-bright hover:underline"
+                className="mt-1 inline-flex min-h-[44px] items-center font-mono text-sm text-accent-bright hover:underline"
               >
                 {site.contactEmail}
               </a>
@@ -316,9 +344,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <div className="mt-16 md:mt-20">
-        <StickyCta />
-      </div>
+      <StickyCta />
     </div>
   );
 }

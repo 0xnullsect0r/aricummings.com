@@ -5,6 +5,7 @@ import { MediaImage } from "@/components/media-image";
 import { SectionRule } from "@/components/section-rule";
 import {
   PreviewExpiredError,
+  orderedWork,
   readDoc,
   type SiteDoc,
   type Snapshot,
@@ -77,8 +78,11 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
   const repoUrl = work.repo?.url;
   const repoLicense = work.repo?.license;
   const sections = work.sections ?? [];
+  const allWork = orderedWork(snapshot);
+  const position = allWork.findIndex((entry) => entry.slug === slug);
+  const next = allWork.length > 1 && position >= 0 ? allWork[(position + 1) % allWork.length] : null;
   const backLink =
-    "inline-flex min-h-[44px] items-center font-mono text-[11px] uppercase tracking-[0.08em] text-muted hover:text-accent-bright";
+    "inline-flex min-h-[44px] items-center font-mono text-xs uppercase tracking-[0.08em] text-muted hover:text-accent-bright";
   const externalLink =
     "inline-flex min-h-[44px] items-center gap-2 font-mono text-sm text-accent-bright hover:underline";
 
@@ -87,7 +91,7 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
       {preview && (
         <p
           role="note"
-          className="mb-6 border border-accent px-3 py-2 font-mono text-[11px] uppercase tracking-[0.08em] text-accent-bright"
+          className="mb-6 border border-accent px-3 py-2 font-mono text-xs uppercase tracking-[0.08em] text-accent-bright"
         >
           Preview — unpublished draft
         </p>
@@ -110,10 +114,10 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
       </a>
 
       <header className="mt-4 border-b border-line pb-8" data-track={work.title}>
-        <h1 className="font-mono text-[clamp(1.5rem,3vw,2.25rem)] font-bold leading-tight text-bone">
+        <h1 className="font-mono text-[clamp(2.25rem,6vw,4rem)] font-bold leading-[1.05] text-bone">
           {work.title}
         </h1>
-        <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
+        <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs uppercase tracking-[0.08em] text-muted">
           {work.status && <span className="text-accent-bright">{work.status}</span>}
           <span>{work.category === "client" ? "Client work" : "Open source"}</span>
           {year && <span>{year}</span>}
@@ -148,7 +152,7 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
             {tech.map((item) => (
               <span
                 key={item}
-                className="border border-line px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-muted"
+                className="border border-line px-1.5 py-0.5 font-mono text-xs uppercase tracking-[0.08em] text-muted"
               >
                 {item}
               </span>
@@ -165,14 +169,18 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
             <section
               key={index}
               data-track={section.heading || "TEXT"}
-              className="mt-10 first:mt-10"
+              className="border-b border-line py-8 md:grid md:grid-cols-12 md:gap-6 md:py-10"
             >
               {section.heading && (
-                <SectionRule label={section.heading} />
+                <h2 className="font-mono text-sm font-bold uppercase leading-snug tracking-[0.08em] text-bone md:col-span-4">
+                  {section.heading}
+                </h2>
               )}
               {section.html && (
                 <div
-                  className="rich mt-4 max-w-[65ch] text-[1.0625rem] leading-[1.65]"
+                  className={`rich mt-3 max-w-[65ch] text-[1.0625rem] leading-[1.65] md:col-span-8 md:mt-0 ${
+                    section.heading ? "" : "md:col-start-5"
+                  }`}
                   dangerouslySetInnerHTML={{ __html: section.html }}
                 />
               )}
@@ -223,6 +231,22 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
         }
         return null;
       })}
+
+      {next && (
+        <a
+          href={`/work/${next.slug}`}
+          data-track="NEXT PROJECT"
+          className="group mt-12 flex min-h-[44px] items-center justify-between gap-4 border border-line px-4 py-5 hover:bg-raise2 md:px-6"
+        >
+          <span>
+            <span className="block font-mono text-xs uppercase tracking-[0.08em] text-muted">Next project</span>
+            <span className="mt-1 block font-mono text-lg font-bold text-bone md:text-2xl">{next.doc.title}</span>
+          </span>
+          <span aria-hidden="true" className="font-mono text-xl text-bone group-hover:text-accent">
+            &#8594;
+          </span>
+        </a>
+      )}
     </article>
   );
 }

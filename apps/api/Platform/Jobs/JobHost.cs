@@ -35,14 +35,28 @@ public sealed class JobHost(IEnumerable<JobOptions> jobs, IServiceScopeFactory s
             var now = DateTimeOffset.UtcNow;
             foreach (var (job, expression) in schedules)
             {
-                var zone = job.TimeZone is null ? TimeZoneInfo.Utc : TimeZoneInfo.FindSystemTimeZoneById(job.TimeZone);
-                var next = expression?.GetNextOccurrence(now.DateTime, zone);
-                if (next is null) continue;
-                // Run when the scheduled time fell within the last tick window.
-                var dueBy = now + TimeSpan.FromSeconds(20);
-                if (next <= dueBy) _ = RunOnce(job, stoppingToken);
+                // One bad schedule must never end the loop: this task is unobserved,
+                // so an escaping exception would silently stop every job.
+                try
+                {
+                    if (expression is null) continue;
+                    var zone = job.TimeZone is null ? TimeZoneInfo.Utc : TimeZoneInfo.FindSystemTimeZoneById(job.TimeZone);
+                    if (IsDue(expression, zone, now, TimeSpan.FromSeconds(20))) _ = RunOnce(job, stoppingToken);
+                }
+                catch (Exception error)
+                {
+                    logger.LogError(error, "Could not evaluate the schedule for job {Job}", job.Name);
+                }
             }
         }
+    }
+
+    /// <summary>True when the next occurrence falls inside the coming tick window.</summary>
+    public static bool IsDue(CronExpression expression, TimeZoneInfo zone, DateTimeOffset now, TimeSpan window)
+    {
+        // Cronos requires DateTimeKind.Utc; DateTimeOffset.DateTime is Unspecified and throws.
+        var next = expression.GetNextOccurrence(now.UtcDateTime, zone);
+        return next is not null && next.Value <= now.UtcDateTime + window;
     }
 
     private static CronExpression? Parse(JobOptions job)

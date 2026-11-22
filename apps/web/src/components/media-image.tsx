@@ -50,7 +50,7 @@ export function MediaImage({
         />
       </picture>
       {caption && (
-        <figcaption className="border-t border-line px-3 py-2 font-mono text-[11px] text-muted">
+        <figcaption className="border-t border-line px-3 py-2 font-mono text-xs text-muted">
           {caption}
         </figcaption>
       )}

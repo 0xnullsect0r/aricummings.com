@@ -67,7 +67,7 @@ export function ContactForm() {
   }
 
   const labelClass =
-    "block font-mono text-[11px] uppercase tracking-[0.08em] text-muted";
+    "block font-mono text-xs uppercase tracking-[0.08em] text-muted";
   const inputClass =
     "mt-1.5 h-11 w-full border border-line-strong bg-raised px-3 font-sans text-bone placeholder:text-muted focus:border-accent";
 
@@ -101,7 +101,7 @@ export function ContactForm() {
             className={inputClass}
           />
           {errors.name && (
-            <p id="contact-name-error" className="mt-1 font-mono text-[11px] text-danger">
+            <p id="contact-name-error" className="mt-1 font-mono text-xs text-danger">
               {errors.name}
             </p>
           )}
@@ -123,7 +123,7 @@ export function ContactForm() {
             className={inputClass}
           />
           {errors.email && (
-            <p id="contact-email-error" className="mt-1 font-mono text-[11px] text-danger">
+            <p id="contact-email-error" className="mt-1 font-mono text-xs text-danger">
               {errors.email}
             </p>
           )}
@@ -144,7 +144,7 @@ export function ContactForm() {
             className={`${inputClass} h-auto py-2.5`}
           />
           {errors.body && (
-            <p id="contact-body-error" className="mt-1 font-mono text-[11px] text-danger">
+            <p id="contact-body-error" className="mt-1 font-mono text-xs text-danger">
               {errors.body}
             </p>
           )}
@@ -158,7 +158,7 @@ export function ContactForm() {
             {pending ? "Sending" : "Send \u2192"}
           </button>
           {formError && (
-            <p role="alert" className="font-mono text-[11px] text-danger">
+            <p role="alert" className="font-mono text-xs text-danger">
               {formError}
             </p>
           )}

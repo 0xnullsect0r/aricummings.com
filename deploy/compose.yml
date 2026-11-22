@@ -51,6 +51,7 @@ services:
     tmpfs: [/tmp]
     environment:
       ARI_API_INTERNAL: http://api:8082
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN}
     networks: [private]
 
 secrets:
