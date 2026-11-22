@@ -22,14 +22,11 @@
 
 - MultiForge: README says GPL-3.0 free software; Ari has also described it as closed-source/license-gated. Which framing ships? (Currently drafted as GPL-3.0 open source, installers public.)
 - SMTP provider + credentials (person).
-- DNS records for admin.aricummings.com + redirects (person).
-- Proxmox allocation: which LXC/VM, IPs (person).
 - Final copy review of drafted Enclave / RustOS / eDEX / Artistech text (Ari).
 - Passkey RP ID is `aricummings.com` — confirm that's wanted (changing it later wipes all passkeys).
 
 ## Not proven yet
 
-- Nothing has run on the real server. Local runs only.
 - SMTP delivery untested until credentials exist.
 - Passkeys: software authenticator tests only until tried on a real phone.
 - Content/media/GitHub areas (wt/content): built and tested on real sockets locally
@@ -118,6 +115,19 @@
   bind-mount permissions, --internal networks disabling published ports (smoke
   now uses the compose two-network topology), registry bound on both loopback
   names for the updater test.
+
+- **v0.1.3 to v0.1.5 (2026-11-22), CI green, live on RWR-Web:** scheduler UTC fix
+  (no cron job had ever run), web PUBLIC_ORIGIN, updater PUBLIC_URL fallback, public
+  UI pass, full GitHub repo pagination, nightly backups. v0.1.5 was installed by the
+  real updater with no failed health checks.
+- **Incident (2026-11-20, found 2026-11-22):** aricummings and Red Wagon both deployed
+  from a folder named `deploy`, so they shared a Compose project and `deploy_data`.
+  Red Wagon's live database was replaced. Restored to isolated `redwagon_*` volumes
+  from the Nov 19 backup. `deploy_backups` still holds Red Wagon's old backups, with a
+  copy in /var/lib/redwagon/recovery-20261122.
+- **Not proven:** nightly backup on the real server (first run pending), SMTP, signed-in
+  admin on the live site, real client IPs (NPM reports 127.0.0.1 for everyone; spoofed
+  X-Forwarded-For values are correctly ignored).
 
 ## Deployment contract
 

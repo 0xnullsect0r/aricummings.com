@@ -53,13 +53,22 @@ arrive as `v*` tags; a systemd timer runs `update.sh` every minute.
   leaves pinned images alone.
 - **Retry a failed release:** delete its line in `deploy/failed-releases`.
 - **Backups:** before each update into `deploy/update-backups` (latest 5), and
-  a nightly job inside the app into the `backups` volume (latest 14). Neither
-  covers the key. Copy both off the machine and do a restore drill.
+  nightly at 02:45 UTC inside the app into `backups/nightly` in the `backups`
+  volume (databases + media, latest 14 days). The nightly job prunes only its
+  own files. Neither covers the key. Both are on this machine until an off-box
+  copy is set up, so copy them and the key off it and do a restore drill.
 - **Restore:** stop the timer and the stack, remove `-wal`/`-shm` files first,
   copy the database files in, start. Use the same key the backup was made with.
 - **Changing the domain:** set the origins in `.env`, update nginx. Keep
   `WEBAUTHN_RP_ID` unless the parent domain changes: changing it deletes every
   passkey.
+
+- **Shared host:** RWR-Web runs several sites. Compose names a project after its
+  folder, so every stack must set a unique `COMPOSE_PROJECT_NAME`. A second folder
+  called `deploy` shares this project's containers and volumes: that is how the
+  aricummings launch overwrote Red Wagon's database on 2026-11-20.
+- **Proxy:** Nginx Proxy Manager at 10.83.6.250 appends to `X-Forwarded-For`; the
+  API trusts only the last entry, from `TRUSTED_PROXY_CIDRS=10.83.6.250/32`.
 
 ## Updating this folder
 
