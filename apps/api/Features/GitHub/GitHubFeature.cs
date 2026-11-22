@@ -51,6 +51,22 @@ public sealed class GitHubSyncJob(Db db, ContentSnapshotService snapshots, Seale
     internal const string ProfileUrl = "https://api.github.com/users/0xnullsect0r";
     internal const string ReposUrl = "https://api.github.com/users/0xnullsect0r/repos?per_page=100&sort=updated";
 
+    private const int RepoPageSize = 100;
+    private const int MaxRepoPages = 20;
+
+    /// <summary>Joins GitHub's paged repo arrays into the one array the cache stores.</summary>
+    public static string MergeRepoPages(IEnumerable<string> pages)
+    {
+        var merged = new System.Text.Json.Nodes.JsonArray();
+        foreach (var page in pages)
+        {
+            if (System.Text.Json.Nodes.JsonNode.Parse(page) is not System.Text.Json.Nodes.JsonArray items)
+                throw new InvalidOperationException("GitHub repos response was not an array");
+            foreach (var item in items) merged.Add(item?.DeepClone());
+        }
+        return merged.ToJsonString();
+    }
+
     public async Task Run(CancellationToken cancellation)
     {
         // Hermetic tests: never reach the real API from a test process.
@@ -64,7 +80,16 @@ public sealed class GitHubSyncJob(Db db, ContentSnapshotService snapshots, Seale
             http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
         var profile = await http.GetStringAsync(ProfileUrl, cancellation);
-        var repos = await http.GetStringAsync(ReposUrl, cancellation);
+        var pages = new List<string>();
+        for (var page = 1; page <= MaxRepoPages; page++)
+        {
+            var body = await http.GetStringAsync($"{ReposUrl}&page={page}", cancellation);
+            ValidateJson(body, "repos");
+            pages.Add(body);
+            using var parsed = JsonDocument.Parse(body);
+            if (parsed.RootElement.ValueKind != JsonValueKind.Array || parsed.RootElement.GetArrayLength() < RepoPageSize) break;
+        }
+        var repos = MergeRepoPages(pages);
         ValidateJson(profile, "profile");
         ValidateJson(repos, "repos");
 

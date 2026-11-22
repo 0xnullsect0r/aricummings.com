@@ -11,10 +11,11 @@ export function GithubStrip({ github }: { github: GithubData | null | undefined 
     github.profile && typeof github.profile === "object" ? github.profile : {};
   const repos = Array.isArray(github.repos) ? github.repos : [];
 
-  let repoCount = repos.length;
-  if (repoCount === 0 && typeof profile.public_repos === "number") {
-    repoCount = profile.public_repos;
-  }
+  // The profile holds GitHub's own total; the repo list is only a fallback.
+  const repoCount =
+    typeof profile.public_repos === "number" && profile.public_repos > 0
+      ? profile.public_repos
+      : repos.length;
   if (repoCount === 0) return null;
 
   const languageCounts = new Map<string, number>();
