@@ -13,14 +13,14 @@ installed by the one-minute updater.
 - [x] Nightly backup job shipped (first run 2026-11-23 02:45 UTC, not yet observed).
 - [x] `main` fast-forwarded to the rebuild. No old publish loop found on this
       desktop or RWR-Web, and no old Vite site on the proxied hosts' port 8080.
+- [x] Real visitor IPs (2026-11-22): the proxy's stream listener now passes them with
+      the PROXY protocol. Enclave's TLS stays end to end. Undo on the proxy VM:
+      `bash /root/real-ip.sh undo`.
 
 ## Needs a person
 
-- [ ] Real visitor IPs: Nginx Proxy Manager itself sees every client as 127.0.0.1,
-      so analytics, geo and per-IP limits treat all visitors as one. Something in
-      front of NPM on its host must pass the real address. Affects every site there.
-- [ ] Off-machine backups: choose a destination, then copy backups AND the key
-      off RWR-Web and run one restore drill.
+- [ ] Off-machine backups: deferred by the owner on 2026-11-22. Backups and the key
+      are only on RWR-Web until then.
 - [ ] SMTP under Settings (owner, password re-confirm). Until then contact
       messages stay in the admin and outbox.
 - [ ] Sign in and check the admin screens on the live site.
@@ -33,8 +33,8 @@ installed by the one-minute updater.
 
 ## Other sites on RWR-Web
 
-- [ ] Red Wagon: restored from the 2026-11-19 11:15 UTC backup. Reconcile Booqable
-      and Stripe for the gap; 70 media records have no files. Its updater timer is
-      off because `latest` is newer than the running v2.0.0-beta.4.
+- [ ] Red Wagon: restored from the 2026-11-19 11:15 UTC backup, then updated to the
+      latest release with auto-updates back on. Reconcile Booqable and Stripe for the
+      gap; 70 media records have no files.
 - [ ] Connected Riding `cr` / `cr2`: offline. Data volumes and /opt folders are
       kept on purpose. Do not delete.

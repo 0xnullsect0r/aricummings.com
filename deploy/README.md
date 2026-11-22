@@ -68,7 +68,9 @@ arrive as `v*` tags; a systemd timer runs `update.sh` every minute.
   called `deploy` shares this project's containers and volumes: that is how the
   aricummings launch overwrote Red Wagon's database on 2026-11-20.
 - **Proxy:** Nginx Proxy Manager at 10.83.6.250 appends to `X-Forwarded-For`; the
-  API trusts only the last entry, from `TRUSTED_PROXY_CIDRS=10.83.6.250/32`.
+  API trusts only the last entry, from `TRUSTED_PROXY_CIDRS=10.83.6.250/32`. NPM gets
+  the real client from its stream listener by PROXY protocol; do not publish NPM's
+  internal 443 directly, because it now requires that header.
 
 ## Updating this folder
 

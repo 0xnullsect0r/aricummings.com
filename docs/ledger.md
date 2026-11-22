@@ -125,9 +125,12 @@
   Red Wagon's live database was replaced. Restored to isolated `redwagon_*` volumes
   from the Nov 19 backup. `deploy_backups` still holds Red Wagon's old backups, with a
   copy in /var/lib/redwagon/recovery-20261122.
+- **Real client IPs fixed (2026-11-22):** NPM's stream listener on 4443 now sends the
+  PROXY protocol to NPM's 443. Enclave's route accepts it on a loopback relay and forwards
+  the raw TLS unchanged. Verified: same Enclave certificate and SecP384r1MLKEM1024
+  handshake, real IP recorded, spoofed X-Forwarded-For ignored.
 - **Not proven:** nightly backup on the real server (first run pending), SMTP, signed-in
-  admin on the live site, real client IPs (NPM reports 127.0.0.1 for everyone; spoofed
-  X-Forwarded-For values are correctly ignored).
+  admin on the live site, a real Enclave client session through the new relay.
 
 ## Deployment contract
 
